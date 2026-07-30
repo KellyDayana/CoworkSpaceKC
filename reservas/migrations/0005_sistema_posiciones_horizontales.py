@@ -31,7 +31,7 @@ def migrar_posiciones_existentes(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('reservas', '0003_alter_escritoriodedicado_posicion_fields_unique'),
+        ('reservas', '0004_cambiar_a_posicion_horizontal'),
     ]
 
     operations = [
