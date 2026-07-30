@@ -1,0 +1,301 @@
+{% extends 'base/plantillaPrincipal.html' %}
+{% load static %}
+
+{% block titulo %}Nuevo Evento{% endblock %}
+
+{% block contenido %}
+<section class="ftco-section bg-light">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-10">
+                <div class="bg-white p-4 rounded shadow-sm">
+                    <h4 class="mb-4"><i class="fa fa-star"></i> Crear Nuevo Evento</h4>
+                    
+                    <form action="{% url 'guardar_evento' %}" method="POST" enctype="multipart/form-data"
+                          id="formNuevoEvento" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label for="titulo" class="form-label">Título del Evento *</label>
+                                <input type="text" class="form-control" name="titulo" id="titulo" 
+                                       placeholder="Ej: Networking de Emprendedores">
+                                <div id="errorTitulo" class="text-danger small"></div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="tipo_evento" class="form-label">Tipo de Evento *</label>
+                                <select class="form-select" name="tipo_evento" id="tipo_evento">
+                                    <option value="">-- Seleccione --</option>
+                                    <option value="networking">Networking</option>
+                                    <option value="capacitacion">Capacitación</option>
+                                    <option value="conferencia">Conferencia</option>
+                                    <option value="social">Social</option>
+                                </select>
+                                <div id="errorTipo" class="text-danger small"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="descripcion" class="form-label">Descripción *</label>
+                            <textarea class="form-control" name="descripcion" id="descripcion" rows="4" 
+                                      placeholder="Describe el evento, agenda, temas a tratar..."></textarea>
+                            <div id="errorDescripcion" class="text-danger small"></div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="organizador" class="form-label">Empresa Organizadora *</label>
+                                <select class="form-select" name="organizador" id="organizador">
+                                    <option value="">-- Seleccione una empresa --</option>
+                                    {% for empresa in empresas %}
+                                    <option value="{{ empresa.id }}">{{ empresa.nombre }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div id="errorOrganizador" class="text-danger small"></div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="sala" class="form-label">Sala Asignada</label>
+                                <select class="form-select" name="sala" id="sala">
+                                    <option value="">-- Sin sala (evento externo) --</option>
+                                    {% for sala in salas %}
+                                    <option value="{{ sala.id }}" data-capacidad="{{ sala.capacidad }}">
+                                        {{ sala.nombre }} - Piso {{ sala.piso }} (Cap: {{ sala.capacidad }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">Opcional si el evento es fuera del coworking</small>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="fecha_evento" class="form-label">Fecha del Evento *</label>
+                                <input type="date" class="form-control" name="fecha_evento" id="fecha_evento">
+                                <div id="errorFecha" class="text-danger small"></div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="hora_inicio" class="form-label">Hora Inicio *</label>
+                                <input type="time" class="form-control" name="hora_inicio" id="hora_inicio">
+                                <div id="errorHoraInicio" class="text-danger small"></div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="hora_fin" class="form-label">Hora Fin *</label>
+                                <input type="time" class="form-control" name="hora_fin" id="hora_fin">
+                                <div id="errorHoraFin" class="text-danger small"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="capacidad_maxima" class="form-label">Capacidad Máxima *</label>
+                                <input type="number" class="form-control" name="capacidad_maxima" 
+                                       id="capacidad_maxima" placeholder="50" min="1">
+                                <div id="errorCapacidad" class="text-danger small"></div>
+                                <small id="capacidadSalaInfo" class="text-muted"></small>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="foto" class="form-label">Imagen del Evento</label>
+                                <input type="file" class="form-control" name="foto" id="foto" accept="image/*">
+                                <small class="text-muted">Banner o imagen promocional</small>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" name="publico" id="publico" checked>
+                            <label class="form-check-label" for="publico">
+                                <strong>Evento Público</strong>
+                                <small class="text-muted d-block">
+                                    Si está marcado, el evento será visible para todos. 
+                                    Si no, solo para miembros de la empresa organizadora.
+                                </small>
+                            </label>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fa fa-lightbulb"></i>
+                            <strong>Tip:</strong> Los eventos públicos aparecerán en el calendario general y 
+                            serán visibles para todos los miembros del coworking.
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'evento_lista' %}" class="btn btn-secondary">
+                                <i class="fa fa-arrow-left"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fa fa-save"></i> Guardar Evento
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Bootstrap FileInput para foto
+$("#foto").fileinput({
+    language: "es",
+    allowedFileExtensions: ["png", "jpg", "jpeg"],
+    showCaption: false,
+    dropZoneEnabled: true,
+    showClose: false,
+    browseLabel: "Seleccionar imagen...",
+    removeLabel: "Quitar"
+});
+$(".fileinput-upload").hide();
+
+// Mostrar capacidad de sala si se selecciona una
+document.getElementById('sala').addEventListener('change', function() {
+    const capacidad = this.options[this.selectedIndex].dataset.capacidad;
+    if (capacidad) {
+        document.getElementById('capacidadSalaInfo').textContent = 
+            'La sala tiene capacidad para ' + capacidad + ' personas';
+    } else {
+        document.getElementById('capacidadSalaInfo').textContent = '';
+    }
+});
+
+// Establecer fecha mínima como hoy
+const hoy = new Date().toISOString().split('T')[0];
+document.getElementById('fecha_evento').setAttribute('min', hoy);
+
+// Validaciones
+document.getElementById('formNuevoEvento').addEventListener('submit', function(e) {
+    let valido = true;
+    
+    // Título
+    const titulo = document.getElementById('titulo').value.trim();
+    const errorTitulo = document.getElementById('errorTitulo');
+    if (titulo === '') {
+        errorTitulo.textContent = 'El título del evento es obligatorio.';
+        valido = false;
+    } else if (titulo.length < 5) {
+        errorTitulo.textContent = 'El título debe tener al menos 5 caracteres.';
+        valido = false;
+    } else {
+        errorTitulo.textContent = '';
+    }
+    
+    // Tipo de evento
+    const tipo = document.getElementById('tipo_evento').value;
+    const errorTipo = document.getElementById('errorTipo');
+    if (tipo === '') {
+        errorTipo.textContent = 'Debe seleccionar un tipo de evento.';
+        valido = false;
+    } else {
+        errorTipo.textContent = '';
+    }
+    
+    // Descripción
+    const descripcion = document.getElementById('descripcion').value.trim();
+    const errorDescripcion = document.getElementById('errorDescripcion');
+    if (descripcion === '') {
+        errorDescripcion.textContent = 'La descripción es obligatoria.';
+        valido = false;
+    } else if (descripcion.length < 20) {
+        errorDescripcion.textContent = 'La descripción debe tener al menos 20 caracteres.';
+        valido = false;
+    } else {
+        errorDescripcion.textContent = '';
+    }
+    
+    // Organizador
+    const organizador = document.getElementById('organizador').value;
+    const errorOrganizador = document.getElementById('errorOrganizador');
+    if (organizador === '') {
+        errorOrganizador.textContent = 'Debe seleccionar una empresa organizadora.';
+        valido = false;
+    } else {
+        errorOrganizador.textContent = '';
+    }
+    
+    // Fecha
+    const fecha = document.getElementById('fecha_evento').value;
+    const errorFecha = document.getElementById('errorFecha');
+    if (fecha === '') {
+        errorFecha.textContent = 'La fecha del evento es obligatoria.';
+        valido = false;
+    } else if (fecha < hoy) {
+        errorFecha.textContent = 'La fecha no puede ser anterior a hoy.';
+        valido = false;
+    } else {
+        errorFecha.textContent = '';
+    }
+    
+    // Hora inicio
+    const horaInicio = document.getElementById('hora_inicio').value;
+    const errorHoraInicio = document.getElementById('errorHoraInicio');
+    if (horaInicio === '') {
+        errorHoraInicio.textContent = 'La hora de inicio es obligatoria.';
+        valido = false;
+    } else {
+        errorHoraInicio.textContent = '';
+    }
+    
+    // Hora fin
+    const horaFin = document.getElementById('hora_fin').value;
+    const errorHoraFin = document.getElementById('errorHoraFin');
+    if (horaFin === '') {
+        errorHoraFin.textContent = 'La hora de fin es obligatoria.';
+        valido = false;
+    } else if (horaInicio && horaFin <= horaInicio) {
+        errorHoraFin.textContent = 'La hora de fin debe ser posterior a la hora de inicio.';
+        valido = false;
+    } else {
+        errorHoraFin.textContent = '';
+    }
+    
+    // Capacidad máxima
+    const capacidad = document.getElementById('capacidad_maxima').value;
+    const errorCapacidad = document.getElementById('errorCapacidad');
+    const salaSelect = document.getElementById('sala');
+    const capacidadSala = salaSelect.value ? 
+        parseInt(salaSelect.options[salaSelect.selectedIndex].dataset.capacidad) : null;
+    
+    if (capacidad === '' || capacidad < 1) {
+        errorCapacidad.textContent = 'La capacidad debe ser mayor a 0.';
+        valido = false;
+    } else if (capacidadSala && parseInt(capacidad) > capacidadSala) {
+        errorCapacidad.textContent = 'Excede la capacidad de la sala (' + capacidadSala + ').';
+        valido = false;
+    } else {
+        errorCapacidad.textContent = '';
+    }
+    
+    if (!valido) {
+        e.preventDefault();
+        Swal.fire({
+            icon: 'error',
+            title: 'Errores en el formulario',
+            text: 'Por favor corrija los errores antes de continuar.',
+            timer: 2500
+        });
+    }
+});
+
+// Limpiar errores al escribir
+['titulo', 'tipo_evento', 'descripcion', 'organizador', 'fecha_evento', 'hora_inicio', 'hora_fin', 'capacidad_maxima'].forEach(function(id) {
+    document.getElementById(id).addEventListener('input', function() {
+        const errorMap = {
+            'titulo': 'errorTitulo',
+            'tipo_evento': 'errorTipo',
+            'descripcion': 'errorDescripcion',
+            'organizador': 'errorOrganizador',
+            'fecha_evento': 'errorFecha',
+            'hora_inicio': 'errorHoraInicio',
+            'hora_fin': 'errorHoraFin',
+            'capacidad_maxima': 'errorCapacidad'
+        };
+        document.getElementById(errorMap[id]).textContent = '';
+    });
+});
+</script>
+{% endblock %}

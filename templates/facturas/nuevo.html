@@ -1,0 +1,391 @@
+{% extends 'base/plantillaPrincipal.html' %}
+{% load static %}
+
+{% block titulo %}Nueva Factura{% endblock %}
+
+{% block contenido %}
+<section class="ftco-section bg-light">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="bg-white p-4 rounded shadow-sm">
+                    <h4 class="mb-4"><i class="fa fa-file-invoice-dollar"></i> Generar Nueva Factura</h4>
+                    
+                    <form action="{% url 'guardar_factura' %}" method="POST" enctype="multipart/form-data"
+                          id="formNuevaFactura" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="empresa" class="form-label">Empresa *</label>
+                                <select class="form-select" name="empresa" id="empresa">
+                                    <option value="">-- Seleccione una empresa --</option>
+                                    {% for empresa in empresas %}
+                                    <option value="{{ empresa.id }}">{{ empresa.nombre }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div id="errorEmpresa" class="text-danger small"></div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="tipo_factura" class="form-label">Tipo de Factura *</label>
+                                <select class="form-select" name="tipo_factura" id="tipo_factura">
+                                    <option value="">-- Seleccione --</option>
+                                    <option value="mensual">Mensual</option>
+                                    <option value="reservas">Reservas</option>
+                                    <option value="evento">Evento</option>
+                                    <option value="otros">Otros</option>
+                                </select>
+                                <div id="errorTipo" class="text-danger small"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="fecha_vencimiento" class="form-label">Fecha de Vencimiento *</label>
+                            <input type="date" class="form-control" name="fecha_vencimiento" id="fecha_vencimiento">
+                            <div id="errorVencimiento" class="text-danger small"></div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="subtotal" class="form-label">Subtotal (USD) *</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" name="subtotal" id="subtotal" 
+                                       placeholder="100.00" step="0.01" min="0">
+                                <button type="button" class="btn btn-success" id="btnCalcularAuto" 
+                                        onclick="calcularSubtotalAutomatico()">
+                                    <i class="fa fa-magic"></i> Calcular Automático
+                                </button>
+                            </div>
+                            <small class="text-muted">
+                                <i class="fa fa-info-circle"></i> 
+                                El cálculo automático suma: escritorios ocupados + reservas confirmadas del mes actual
+                            </small>
+                            <div id="errorSubtotal" class="text-danger small"></div>
+                        </div>
+                        
+                        <!-- Cálculo Automático -->
+                        <div class="card mb-3 bg-light">
+                            <div class="card-body">
+                                <h5 class="card-title"><i class="fa fa-calculator"></i> Cálculo Automático</h5>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <strong>Subtotal:</strong><br>
+                                        <span id="mostrarSubtotal" class="text-primary h5">$0.00</span>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <strong>IVA (15%):</strong><br>
+                                        <span id="mostrarIva" class="text-warning h5">$0.00</span>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <strong>Total:</strong><br>
+                                        <span id="mostrarTotal" class="text-success h5">$0.00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="estado" class="form-label">Estado</label>
+                                <select class="form-select" name="estado" id="estado">
+                                    <option value="pendiente" selected>Pendiente</option>
+                                    <option value="pagada">Pagada</option>
+                                    <option value="vencida">Vencida</option>
+                                    <option value="cancelada">Cancelada</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="pdf" class="form-label">Archivo PDF (Opcional)</label>
+                                <input type="file" class="form-control" name="pdf" id="pdf" accept=".pdf">
+                                <small class="text-muted">Se puede generar después</small>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="notas" class="form-label">Notas</label>
+                            <textarea class="form-control" name="notas" id="notas" rows="3" 
+                                      placeholder="Información adicional sobre la factura..."></textarea>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fa fa-info-circle"></i>
+                            <strong>Nota:</strong> El número de factura se generará automáticamente 
+                            en formato FACT-YYYY-0001.
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'factura_lista' %}" class="btn btn-secondary">
+                                <i class="fa fa-arrow-left"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fa fa-save"></i> Guardar Factura
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Bootstrap FileInput para PDF
+$("#pdf").fileinput({
+    language: "es",
+    allowedFileExtensions: ["pdf"],
+    showCaption: false,
+    dropZoneEnabled: true,
+    showClose: false,
+    browseLabel: "Seleccionar PDF...",
+    removeLabel: "Quitar"
+});
+$(".fileinput-upload").hide();
+
+// Función para calcular subtotal automáticamente
+function calcularSubtotalAutomatico() {
+    const empresaId = document.getElementById('empresa').value;
+    
+    if (!empresaId) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Selecciona una empresa',
+            text: 'Primero debes seleccionar una empresa para calcular el subtotal',
+            timer: 2500
+        });
+        return;
+    }
+    
+    // Mostrar loading
+    Swal.fire({
+        title: 'Calculando...',
+        text: 'Obteniendo servicios de la empresa',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
+    // Llamar al backend para calcular
+    $.ajax({
+        url: '/facturas/calcular-subtotal/' + empresaId + '/',
+        method: 'GET',
+        success: function(response) {
+            Swal.close();
+            
+            if (response.success) {
+                // Actualizar el subtotal
+                document.getElementById('subtotal').value = response.subtotal.toFixed(2);
+                
+                // Trigger event para actualizar IVA y Total
+                document.getElementById('subtotal').dispatchEvent(new Event('input'));
+                
+                // Mostrar desglose
+                let detalleHTML = '<div class="text-left" style="font-size: 14px;">';
+                detalleHTML += '<p><strong>Desglose de servicios:</strong></p>';
+                detalleHTML += '<ul>';
+                
+                if (response.desglose.escritorios_count > 0) {
+                    detalleHTML += '<li>Escritorios ocupados: ' + response.desglose.escritorios_count + 
+                                  ' x $' + response.desglose.escritorios_promedio.toFixed(2) + 
+                                  ' = $' + response.desglose.escritorios_total.toFixed(2) + '</li>';
+                }
+                
+                if (response.desglose.reservas_count > 0) {
+                    detalleHTML += '<li>Reservas del mes: ' + response.desglose.reservas_count + 
+                                  ' = $' + response.desglose.reservas_total.toFixed(2) + '</li>';
+                }
+                
+                detalleHTML += '</ul>';
+                detalleHTML += '<p class="mt-2"><strong>Subtotal calculado: $' + response.subtotal.toFixed(2) + '</strong></p>';
+                detalleHTML += '</div>';
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Subtotal calculado!',
+                    html: detalleHTML,
+                    width: '500px'
+                });
+            } else {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Sin servicios',
+                    text: response.message || 'Esta empresa no tiene servicios facturables este mes',
+                    timer: 3000
+                });
+            }
+        },
+        error: function(xhr, status, error) {
+            Swal.close();
+            console.error('Error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'No se pudo calcular el subtotal',
+                timer: 2500
+            });
+        }
+    });
+}
+
+// Calcular IVA y Total automáticamente
+document.getElementById('subtotal').addEventListener('input', function() {
+    const subtotal = parseFloat(this.value) || 0;
+    const iva = subtotal * 0.15; // IVA 15%
+    const total = subtotal + iva;
+    
+    document.getElementById('mostrarSubtotal').textContent = '$' + subtotal.toFixed(2);
+    document.getElementById('mostrarIva').textContent = '$' + iva.toFixed(2);
+    document.getElementById('mostrarTotal').textContent = '$' + total.toFixed(2);
+});
+
+// Establecer fecha mínima de vencimiento como hoy
+const hoy = new Date().toISOString().split('T')[0];
+document.getElementById('fecha_vencimiento').setAttribute('min', hoy);
+
+// Sugerir fecha de vencimiento (30 días desde hoy)
+const fechaSugerida = new Date();
+fechaSugerida.setDate(fechaSugerida.getDate() + 30);
+document.getElementById('fecha_vencimiento').value = fechaSugerida.toISOString().split('T')[0];
+
+// Validaciones
+document.getElementById('formNuevaFactura').addEventListener('submit', function(e) {
+    let valido = true;
+    
+    // Empresa
+    const empresa = document.getElementById('empresa').value;
+    const errorEmpresa = document.getElementById('errorEmpresa');
+    if (empresa === '') {
+        errorEmpresa.textContent = 'Debe seleccionar una empresa.';
+        valido = false;
+    } else {
+        errorEmpresa.textContent = '';
+    }
+    
+    // Tipo de factura
+    const tipo = document.getElementById('tipo_factura').value;
+    const errorTipo = document.getElementById('errorTipo');
+    if (tipo === '') {
+        errorTipo.textContent = 'Debe seleccionar un tipo de factura.';
+        valido = false;
+    } else {
+        errorTipo.textContent = '';
+    }
+    
+    // Fecha de vencimiento
+    const vencimiento = document.getElementById('fecha_vencimiento').value;
+    const errorVencimiento = document.getElementById('errorVencimiento');
+    if (vencimiento === '') {
+        errorVencimiento.textContent = 'La fecha de vencimiento es obligatoria.';
+        valido = false;
+    } else if (vencimiento < hoy) {
+        errorVencimiento.textContent = 'La fecha no puede ser anterior a hoy.';
+        valido = false;
+    } else {
+        errorVencimiento.textContent = '';
+    }
+    
+    // Subtotal
+    const subtotal = document.getElementById('subtotal').value;
+    const errorSubtotal = document.getElementById('errorSubtotal');
+    if (subtotal === '' || subtotal <= 0) {
+        errorSubtotal.textContent = 'El subtotal debe ser mayor a 0.';
+        valido = false;
+    } else {
+        errorSubtotal.textContent = '';
+    }
+    
+    if (!valido) {
+        e.preventDefault();
+        Swal.fire({
+            icon: 'error',
+            title: 'Errores en el formulario',
+            text: 'Por favor corrija los errores antes de continuar.',
+            timer: 2500
+        });
+    }
+});
+
+// Limpiar errores al escribir
+['empresa', 'tipo_factura', 'fecha_vencimiento', 'subtotal'].forEach(function(id) {
+    document.getElementById(id).addEventListener('input', function() {
+        const errorMap = {
+            'empresa': 'errorEmpresa',
+            'tipo_factura': 'errorTipo',
+            'fecha_vencimiento': 'errorVencimiento',
+            'subtotal': 'errorSubtotal'
+        };
+        document.getElementById(errorMap[id]).textContent = '';
+    });
+});
+
+// Tour guiado del Formulario de Nueva Factura
+{% if user.is_authenticated %}
+setTimeout(function() {
+    if (!localStorage.getItem('tour_nueva_factura')) {
+        const driver = window.driver.js.driver;
+        const driverObj = driver({
+            showProgress: true,
+            showButtons: ['next', 'previous', 'close'],
+            nextBtnText: 'Siguiente',
+            prevBtnText: 'Anterior',
+            doneBtnText: '¡Entendido!',
+            steps: [
+                { 
+                    popover: { 
+                        title: '💰 Nueva Factura', 
+                        description: 'Aquí generas facturas para las empresas clientes por servicios del coworking.',
+                        side: 'center'
+                    }
+                },
+                { 
+                    element: '#empresa', 
+                    popover: { 
+                        title: '🏢 Selecciona la Empresa', 
+                        description: 'Primero elige la empresa a la que quieres facturar.',
+                        side: "bottom"
+                    }
+                },
+                { 
+                    element: '#btnCalcularAuto', 
+                    popover: { 
+                        title: '🪄 Cálculo Automático', 
+                        description: 'Usa este botón mágico para calcular automáticamente el subtotal sumando escritorios ocupados y reservas del mes.',
+                        side: "left"
+                    }
+                },
+                { 
+                    element: '.card.bg-light', 
+                    popover: { 
+                        title: '🧮 Calculadora Automática', 
+                        description: 'El sistema calcula automáticamente el IVA (15%) y el total. Solo ingresa el subtotal.',
+                        side: "top"
+                    }
+                },
+                { 
+                    element: '#pdf', 
+                    popover: { 
+                        title: '📄 Archivo PDF', 
+                        description: 'Puedes adjuntar un PDF de factura generado externamente (opcional).',
+                        side: "top"
+                    }
+                },
+                { 
+                    popover: { 
+                        title: '✅ ¡Listo para facturar!', 
+                        description: 'Ya conoces cómo generar facturas. El sistema enviará un email automático a la empresa.',
+                        side: 'center'
+                    }
+                }
+            ]
+        });
+        
+        driverObj.drive();
+        localStorage.setItem('tour_nueva_factura', 'true');
+    }
+}, 1500);
+{% endif %}
+</script>
+{% endblock %}

@@ -1,0 +1,193 @@
+{% extends 'base/plantillaPrincipal.html' %}
+{% load static %}
+
+{% block titulo %}Nueva Empresa{% endblock %}
+
+{% block contenido %}
+<section class="ftco-section bg-light">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="bg-white p-4 rounded shadow-sm">
+                    <h4 class="mb-4"><i class="fa fa-building"></i> Registrar Nueva Empresa</h4>
+                    
+                    <form action="{% url 'guardar_empresa' %}" method="POST" enctype="multipart/form-data" 
+                          id="formNuevoEmpresa" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="nombre" class="form-label">Nombre de la Empresa *</label>
+                                <input type="text" class="form-control" name="nombre" id="nombre" 
+                                       placeholder="Ej: Tech Solutions S.A.">
+                                <div id="errorNombre" class="text-danger small"></div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="ruc" class="form-label">RUC *</label>
+                                <input type="text" class="form-control" name="ruc" id="ruc" 
+                                       placeholder="1234567890001" maxlength="13">
+                                <div id="errorRuc" class="text-danger small"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Email *</label>
+                                <input type="email" class="form-control" name="email" id="email" 
+                                       placeholder="contacto@empresa.com">
+                                <div id="errorEmail" class="text-danger small"></div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="telefono" class="form-label">Teléfono *</label>
+                                <input type="text" class="form-control" name="telefono" id="telefono" 
+                                       placeholder="0999999999" maxlength="15">
+                                <div id="errorTelefono" class="text-danger small"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="direccion" class="form-label">Dirección *</label>
+                            <textarea class="form-control" name="direccion" id="direccion" rows="3" 
+                                      placeholder="Dirección completa de la empresa"></textarea>
+                            <div id="errorDireccion" class="text-danger small"></div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="plan" class="form-label">Plan *</label>
+                                <select class="form-select" name="plan" id="plan">
+                                    <option value="">-- Seleccione un plan --</option>
+                                    <option value="basico">Básico</option>
+                                    <option value="profesional">Profesional</option>
+                                    <option value="empresarial">Empresarial</option>
+                                </select>
+                                <div id="errorPlan" class="text-danger small"></div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="logo" class="form-label">Logo</label>
+                                <input type="file" class="form-control" name="logo" id="logo" accept="image/*">
+                                <small class="text-muted">Formatos: PNG, JPG, JPEG</small>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" name="activo" id="activo" checked>
+                            <label class="form-check-label" for="activo">
+                                Empresa Activa
+                            </label>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'empresa_lista' %}" class="btn btn-secondary">
+                                <i class="fa fa-arrow-left"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fa fa-save"></i> Guardar Empresa
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Bootstrap FileInput para logo
+$("#logo").fileinput({
+    language: "es",
+    allowedFileExtensions: ["png", "jpg", "jpeg"],
+    showCaption: false,
+    dropZoneEnabled: true,
+    showClose: false,
+    browseLabel: "Seleccionar logo...",
+    removeLabel: "Quitar"
+});
+$(".fileinput-upload").hide();
+
+// Validaciones
+document.getElementById('formNuevoEmpresa').addEventListener('submit', function(e) {
+    let valido = true;
+    
+    // Nombre
+    const nombre = document.getElementById('nombre').value.trim();
+    const errorNombre = document.getElementById('errorNombre');
+    if (nombre === '') {
+        errorNombre.textContent = 'El nombre de la empresa es obligatorio.';
+        valido = false;
+    } else if (nombre.length < 3) {
+        errorNombre.textContent = 'El nombre debe tener al menos 3 caracteres.';
+        valido = false;
+    } else {
+        errorNombre.textContent = '';
+    }
+    
+    // RUC
+    const ruc = document.getElementById('ruc').value.trim();
+    const errorRuc = document.getElementById('errorRuc');
+    if (ruc === '') {
+        errorRuc.textContent = 'El RUC es obligatorio.';
+        valido = false;
+    } else if (!/^\d{13}$/.test(ruc)) {
+        errorRuc.textContent = 'El RUC debe tener 13 dígitos.';
+        valido = false;
+    } else {
+        errorRuc.textContent = '';
+    }
+    
+    // Email
+    const email = document.getElementById('email').value.trim();
+    const errorEmail = document.getElementById('errorEmail');
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (email === '') {
+        errorEmail.textContent = 'El email es obligatorio.';
+        valido = false;
+    } else if (!emailRegex.test(email)) {
+        errorEmail.textContent = 'Ingrese un email válido.';
+        valido = false;
+    } else {
+        errorEmail.textContent = '';
+    }
+    
+    // Teléfono
+    const telefono = document.getElementById('telefono').value.trim();
+    const errorTelefono = document.getElementById('errorTelefono');
+    if (telefono === '') {
+        errorTelefono.textContent = 'El teléfono es obligatorio.';
+        valido = false;
+    } else if (telefono.length < 7) {
+        errorTelefono.textContent = 'El teléfono debe tener al menos 7 dígitos.';
+        valido = false;
+    } else {
+        errorTelefono.textContent = '';
+    }
+    
+    // Dirección
+    const direccion = document.getElementById('direccion').value.trim();
+    const errorDireccion = document.getElementById('errorDireccion');
+    if (direccion === '') {
+        errorDireccion.textContent = 'La dirección es obligatoria.';
+        valido = false;
+    } else {
+        errorDireccion.textContent = '';
+    }
+    
+    // Plan
+    const plan = document.getElementById('plan').value;
+    const errorPlan = document.getElementById('errorPlan');
+    if (plan === '') {
+        errorPlan.textContent = 'Debe seleccionar un plan.';
+        valido = false;
+    } else {
+        errorPlan.textContent = '';
+    }
+    
+    if (!valido) e.preventDefault();
+});
+</script>
+{% endblock %}

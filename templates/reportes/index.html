@@ -1,0 +1,193 @@
+{% extends 'base/plantillaPrincipal.html' %}
+{% load static %}
+
+{% block titulo %}Reportes - CoworkSpace KC{% endblock %}
+
+{% block contenido %}
+<!-- Hero Reportes -->
+<div class="hero-wrap" style="background: linear-gradient(135deg, #2D4A64 0%, #0D1B2A 100%); padding: 60px 0;">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12 text-white">
+                <h1 class="mb-2"><i class="fa fa-chart-line"></i> Reportes y Análisis</h1>
+                <p class="lead">Métricas, estadísticas y análisis de CoworkSpace KC</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sección de Reportes -->
+<section class="ftco-section" style="margin-top: -30px;">
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="alert alert-info">
+                    <i class="fa fa-info-circle"></i> 
+                    <strong>Bienvenido al Sistema de Reportes.</strong> Seleccione el reporte que desea visualizar.
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarjetas de Reportes Disponibles -->
+        <div class="row">
+            <!-- Reporte de Ocupación -->
+            <div class="col-md-6 mb-4">
+                <div class="card border-0 shadow-lg h-100">
+                    <div class="card-header text-white" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                        <h4 class="mb-0">
+                            <i class="fa fa-chart-pie"></i> Reporte de Ocupación
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">Tasa de Ocupación por Metros Cuadrados</h5>
+                        <p class="card-text">
+                            Visualiza las métricas de ocupación de escritorios, disponibilidad, estado de mantenimiento 
+                            y distribución de metros cuadrados en el coworking.
+                        </p>
+                        <ul class="list-unstyled">
+                            <li><i class="fa fa-check text-success"></i> Escritorios ocupados vs disponibles</li>
+                            <li><i class="fa fa-check text-success"></i> Tasa de ocupación en porcentaje</li>
+                            <li><i class="fa fa-check text-success"></i> Distribución por estado</li>
+                            <li><i class="fa fa-check text-success"></i> Metros cuadrados totales</li>
+                        </ul>
+                    </div>
+                    <div class="card-footer bg-white border-0">
+                        <a href="{% url 'reporte_ocupacion' %}" class="btn btn-success btn-lg w-100">
+                            <i class="fa fa-eye"></i> Ver Reporte de Ocupación
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reporte de Facturación -->
+            <div class="col-md-6 mb-4">
+                <div class="card border-0 shadow-lg h-100">
+                    <div class="card-header text-white" style="background: linear-gradient(135deg, #007bff 0%, #6610f2 100%);">
+                        <h4 class="mb-0">
+                            <i class="fa fa-file-invoice-dollar"></i> Reporte de Facturación
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">Consumo de Horas y Facturación Recurrente</h5>
+                        <p class="card-text">
+                            Analiza el consumo de horas de salas por empresa, facturación recurrente mensual, 
+                            facturas pagadas y pendientes por cada empresa cliente.
+                        </p>
+                        <ul class="list-unstyled">
+                            <li><i class="fa fa-check text-primary"></i> Horas de salas por empresa</li>
+                            <li><i class="fa fa-check text-primary"></i> Facturación total y por empresa</li>
+                            <li><i class="fa fa-check text-primary"></i> Estado de facturas (pagadas/pendientes)</li>
+                            <li><i class="fa fa-check text-primary"></i> Análisis de ingresos recurrentes</li>
+                        </ul>
+                    </div>
+                    <div class="card-footer bg-white border-0">
+                        <a href="{% url 'reporte_facturacion' %}" class="btn btn-primary btn-lg w-100">
+                            <i class="fa fa-eye"></i> Ver Reporte de Facturación
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estadísticas Rápidas -->
+        <div class="row mt-5">
+            <div class="col-md-12">
+                <h3 class="mb-4"><i class="fa fa-tachometer-alt"></i> Resumen General</h3>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-3 mb-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="fa fa-building fa-3x mb-3" style="color: #4A6785;"></i>
+                        <h3 class="mb-0">{{ total_empresas }}</h3>
+                        <p class="text-muted mb-0">Empresas Activas</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="fa fa-users fa-3x mb-3 text-info"></i>
+                        <h3 class="mb-0">{{ total_miembros }}</h3>
+                        <p class="text-muted mb-0">Miembros Registrados</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="fa fa-door-open fa-3x mb-3 text-success"></i>
+                        <h3 class="mb-0">{{ total_salas }}</h3>
+                        <p class="text-muted mb-0">Salas Disponibles</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="fa fa-calendar-check fa-3x mb-3 text-warning"></i>
+                        <h3 class="mb-0">{{ total_reservas }}</h3>
+                        <p class="text-muted mb-0">Reservas del Mes</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Accesos Rápidos -->
+        <div class="row mt-5">
+            <div class="col-md-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0"><i class="fa fa-bolt"></i> Accesos Rápidos</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-3 mb-3">
+                                <a href="{% url 'dashboard' %}" class="btn btn-outline-primary btn-lg w-100">
+                                    <i class="fa fa-tachometer-alt"></i><br>
+                                    Dashboard
+                                </a>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <a href="{% url 'empresa_lista' %}" class="btn btn-outline-success btn-lg w-100">
+                                    <i class="fa fa-building"></i><br>
+                                    Empresas
+                                </a>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <a href="{% url 'factura_lista' %}" class="btn btn-outline-info btn-lg w-100">
+                                    <i class="fa fa-file-invoice"></i><br>
+                                    Facturas
+                                </a>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <a href="{% url 'reserva_lista' %}" class="btn btn-outline-warning btn-lg w-100">
+                                    <i class="fa fa-calendar"></i><br>
+                                    Reservas
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Animación de entrada de tarjetas
+    $('.card').each(function(index) {
+        $(this).css('opacity', '0');
+        $(this).animate({ opacity: 1 }, 300 * (index + 1));
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,115 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <title>Iniciar Sesión - CoworkSpace KC</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <link href="https://fonts.googleapis.com/css?family=Poppins:200,300,400,500,600,700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    
+    <style>
+        .login-wrap {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            background: linear-gradient(135deg, #2D4A64 0%, #0D1B2A 100%);
+        }
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="login-wrap">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-6 col-lg-5">
+                    <div class="login-box">
+                        <div class="text-center mb-4">
+                            <h2>CoworkSpace<span style="color: #4A6785;">KC</span></h2>
+                            <p class="text-muted">Inicia sesión en tu cuenta</p>
+                        </div>
+                        
+                        <form action="{% url 'login' %}" method="POST" id="formLogin" novalidate>
+                            {% csrf_token %}
+                            
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Usuario</label>
+                                <input type="text" class="form-control" name="username" id="username" placeholder="Ingresa tu usuario">
+                                <div id="errorUsername" class="text-danger small"></div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Contraseña</label>
+                                <input type="password" class="form-control" name="password" id="password" placeholder="Ingresa tu contraseña">
+                                <div id="errorPassword" class="text-danger small"></div>
+                            </div>
+                            
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg">Ingresar</button>
+                            </div>
+                        </form>
+                        
+                        <div class="text-center mt-4">
+                            <p>¿No tienes cuenta? <a href="{% url 'registro' %}">Regístrate aquí</a></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
+    
+    {% if messages %}
+        {% for mensaje in messages %}
+        <script>
+        Swal.fire({
+            title: "Error",
+            icon: "error",
+            text: "{{ mensaje }}",
+            confirmButtonColor: '#4A6785'
+        });
+        </script>
+        {% endfor %}
+    {% endif %}
+    
+    <script>
+    document.getElementById('formLogin').addEventListener('submit', function(e) {
+        let valido = true;
+        
+        const username = document.getElementById('username').value.trim();
+        const errorUsername = document.getElementById('errorUsername');
+        if (username === '') {
+            errorUsername.textContent = 'El usuario es obligatorio.';
+            valido = false;
+        } else if (username.length < 3) {
+            errorUsername.textContent = 'El usuario debe tener al menos 3 caracteres.';
+            valido = false;
+        } else {
+            errorUsername.textContent = '';
+        }
+        
+        const password = document.getElementById('password').value;
+        const errorPassword = document.getElementById('errorPassword');
+        if (password === '') {
+            errorPassword.textContent = 'La contraseña es obligatoria.';
+            valido = false;
+        } else {
+            errorPassword.textContent = '';
+        }
+        
+        if (!valido) e.preventDefault();
+    });
+    </script>
+</body>
+</html>

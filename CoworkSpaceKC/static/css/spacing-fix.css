@@ -1,0 +1,124 @@
+/* 
+ * CORRECCIÓN DE ESPACIADO
+ * Enfoque específico para eliminar espacio entre navbar y contenido
+ */
+
+/* ========================================
+   ELIMINAR ESPACIO ENTRE NAVBAR Y CONTENIDO
+   ======================================== */
+
+/* Navbar sin margen inferior */
+nav,
+.navbar,
+.ftco_navbar,
+.ftco-navbar-light,
+#ftco-navbar {
+    margin-bottom: 0 !important;
+}
+
+/* Contenido inmediatamente después del navbar */
+nav + *,
+.navbar + *,
+#ftco-navbar + * {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+/* Secciones sin padding superior excesivo */
+section:first-of-type,
+.ftco-section:first-of-type {
+    padding-top: 1rem !important;
+}
+
+/* ========================================
+   HERO SECTIONS MÁS COMPACTOS
+   ======================================== */
+.hero-wrap {
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+.hero-wrap.js-fullheight {
+    min-height: 300px !important;
+    height: auto !important;
+}
+
+/* ========================================
+   SECCIONES MÁS COMPACTAS
+   ======================================== */
+.ftco-section {
+    padding-top: 1.5rem !important;
+    padding-bottom: 1.5rem !important;
+}
+
+.ftco-section.bg-light {
+    padding-top: 1.5rem !important;
+    padding-bottom: 1.5rem !important;
+}
+
+/* ========================================
+   HEADINGS MÁS COMPACTOS
+   ======================================== */
+.heading-section {
+    padding-top: 0 !important;
+    padding-bottom: 0.5rem !important;
+    margin-bottom: 1rem !important;
+}
+
+.row.justify-content-center.pb-5 {
+    padding-bottom: 1rem !important;
+}
+
+.row.justify-content-center.mb-3 {
+    margin-bottom: 0.5rem !important;
+}
+
+/* ========================================
+   CONTAINERS MÁS COMPACTOS  
+   ======================================== */
+.container {
+    padding-top: 0 !important;
+}
+
+/* ========================================
+   ELIMINAR ESPACIOS EN BLANCO VACÍOS
+   ======================================== */
+body {
+    background-color: #f8f9fa !important;
+}
+
+/* Cualquier div vacío después del navbar */
+.navbar + div:empty,
+nav + div:empty {
+    display: none !important;
+}
+
+/* ========================================
+   AJUSTAR TOP BAR
+   ======================================== */
+.wrap {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+    margin: 0 !important;
+}
+
+/* ========================================
+   CARDS Y CONTENIDO
+   ======================================== */
+.bg-white {
+    margin-top: 0 !important;
+}
+
+.card {
+    margin-bottom: 1rem !important;
+}
+
+/* ========================================
+   TABLAS
+   ======================================== */
+.table-responsive {
+    margin-top: 0 !important;
+}
+

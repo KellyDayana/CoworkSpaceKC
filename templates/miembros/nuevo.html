@@ -1,0 +1,216 @@
+{% extends 'base/plantillaPrincipal.html' %}
+{% load static %}
+
+{% block titulo %}Nuevo Miembro - {{ empresa.nombre }}{% endblock %}
+
+{% block contenido %}
+<section class="ftco-section bg-light">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="bg-white p-4 rounded shadow-sm">
+                    <h4 class="mb-4">
+                        <i class="fa fa-user-plus"></i> Nuevo Miembro para {{ empresa.nombre }}
+                    </h4>
+                    
+                    <form action="{% url 'guardar_miembro' empresa.id %}" method="POST" enctype="multipart/form-data" 
+                          id="formNuevoMiembro" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="nombre" class="form-label">Nombres *</label>
+                                <input type="text" class="form-control" name="nombre" id="nombre" 
+                                       placeholder="Nombres del miembro">
+                                <div id="errorNombre" class="text-danger small"></div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="apellido" class="form-label">Apellidos *</label>
+                                <input type="text" class="form-control" name="apellido" id="apellido" 
+                                       placeholder="Apellidos del miembro">
+                                <div id="errorApellido" class="text-danger small"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="cedula" class="form-label">Cédula *</label>
+                                <input type="text" class="form-control" name="cedula" id="cedula" 
+                                       placeholder="0123456789" maxlength="10">
+                                <div id="errorCedula" class="text-danger small"></div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Email *</label>
+                                <input type="email" class="form-control" name="email" id="email" 
+                                       placeholder="miembro@email.com">
+                                <div id="errorEmail" class="text-danger small"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="telefono" class="form-label">Teléfono *</label>
+                                <input type="text" class="form-control" name="telefono" id="telefono" 
+                                       placeholder="0999999999" maxlength="15">
+                                <div id="errorTelefono" class="text-danger small"></div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="cargo" class="form-label">Cargo *</label>
+                                <select class="form-select" name="cargo" id="cargo">
+                                    <option value="">-- Seleccione un cargo --</option>
+                                    <option value="gerente">Gerente</option>
+                                    <option value="empleado">Empleado</option>
+                                    <option value="freelancer">Freelancer</option>
+                                </select>
+                                <div id="errorCargo" class="text-danger small"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="fecha_ingreso" class="form-label">Fecha de Ingreso *</label>
+                                <input type="date" class="form-control" name="fecha_ingreso" id="fecha_ingreso">
+                                <div id="errorFechaIngreso" class="text-danger small"></div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="foto" class="form-label">Foto</label>
+                                <input type="file" class="form-control" name="foto" id="foto" accept="image/*">
+                                <small class="text-muted">Formatos: PNG, JPG, JPEG</small>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" name="activo" id="activo" checked>
+                            <label class="form-check-label" for="activo">
+                                Miembro Activo
+                            </label>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'miembro_lista' empresa.id %}" class="btn btn-secondary">
+                                <i class="fa fa-arrow-left"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fa fa-save"></i> Guardar Miembro
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Bootstrap FileInput para foto
+$("#foto").fileinput({
+    language: "es",
+    allowedFileExtensions: ["png", "jpg", "jpeg"],
+    showCaption: false,
+    dropZoneEnabled: true,
+    showClose: false,
+    browseLabel: "Seleccionar foto...",
+    removeLabel: "Quitar"
+});
+$(".fileinput-upload").hide();
+
+// Validaciones
+document.getElementById('formNuevoMiembro').addEventListener('submit', function(e) {
+    let valido = true;
+    
+    // Nombre
+    const nombre = document.getElementById('nombre').value.trim();
+    const errorNombre = document.getElementById('errorNombre');
+    if (nombre === '') {
+        errorNombre.textContent = 'El nombre es obligatorio.';
+        valido = false;
+    } else if (nombre.length < 2) {
+        errorNombre.textContent = 'El nombre debe tener al menos 2 caracteres.';
+        valido = false;
+    } else {
+        errorNombre.textContent = '';
+    }
+    
+    // Apellido
+    const apellido = document.getElementById('apellido').value.trim();
+    const errorApellido = document.getElementById('errorApellido');
+    if (apellido === '') {
+        errorApellido.textContent = 'El apellido es obligatorio.';
+        valido = false;
+    } else if (apellido.length < 2) {
+        errorApellido.textContent = 'El apellido debe tener al menos 2 caracteres.';
+        valido = false;
+    } else {
+        errorApellido.textContent = '';
+    }
+    
+    // Cédula
+    const cedula = document.getElementById('cedula').value.trim();
+    const errorCedula = document.getElementById('errorCedula');
+    if (cedula === '') {
+        errorCedula.textContent = 'La cédula es obligatoria.';
+        valido = false;
+    } else if (!/^\d{10}$/.test(cedula)) {
+        errorCedula.textContent = 'La cédula debe tener 10 dígitos.';
+        valido = false;
+    } else {
+        errorCedula.textContent = '';
+    }
+    
+    // Email
+    const email = document.getElementById('email').value.trim();
+    const errorEmail = document.getElementById('errorEmail');
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (email === '') {
+        errorEmail.textContent = 'El email es obligatorio.';
+        valido = false;
+    } else if (!emailRegex.test(email)) {
+        errorEmail.textContent = 'Ingrese un email válido.';
+        valido = false;
+    } else {
+        errorEmail.textContent = '';
+    }
+    
+    // Teléfono
+    const telefono = document.getElementById('telefono').value.trim();
+    const errorTelefono = document.getElementById('errorTelefono');
+    if (telefono === '') {
+        errorTelefono.textContent = 'El teléfono es obligatorio.';
+        valido = false;
+    } else if (telefono.length < 7) {
+        errorTelefono.textContent = 'El teléfono debe tener al menos 7 dígitos.';
+        valido = false;
+    } else {
+        errorTelefono.textContent = '';
+    }
+    
+    // Cargo
+    const cargo = document.getElementById('cargo').value;
+    const errorCargo = document.getElementById('errorCargo');
+    if (cargo === '') {
+        errorCargo.textContent = 'Debe seleccionar un cargo.';
+        valido = false;
+    } else {
+        errorCargo.textContent = '';
+    }
+    
+    // Fecha de ingreso
+    const fecha_ingreso = document.getElementById('fecha_ingreso').value;
+    const errorFechaIngreso = document.getElementById('errorFechaIngreso');
+    if (fecha_ingreso === '') {
+        errorFechaIngreso.textContent = 'La fecha de ingreso es obligatoria.';
+        valido = false;
+    } else {
+        errorFechaIngreso.textContent = '';
+    }
+    
+    if (!valido) e.preventDefault();
+});
+</script>
+{% endblock %}

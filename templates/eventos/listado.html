@@ -1,0 +1,261 @@
+{% extends 'base/plantillaPrincipal.html' %}
+{% load static %}
+
+{% block titulo %}Eventos{% endblock %}
+
+{% block contenido %}
+<section class="ftco-section bg-light">
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h3><i class="fa fa-star"></i> Eventos del Coworking</h3>
+                    {% if user.is_superuser %}
+                    <a href="{% url 'nuevo_evento' %}" class="btn btn-primary">
+                        <i class="fa fa-plus"></i> Nuevo Evento
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-12">
+                <div class="bg-white p-4 rounded shadow-sm">
+                    <div class="table-responsive">
+                        <table id="tablaEventos" class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Título</th>
+                                    <th>Organizador</th>
+                                    <th>Fecha</th>
+                                    <th>Horario</th>
+                                    <th>Sala</th>
+                                    <th>Capacidad</th>
+                                    <th>Tipo</th>
+                                    <th>Visibilidad</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for evento in eventos %}
+                                <tr>
+                                    <td>{{ evento.id }}</td>
+                                    <td>
+                                        {% if evento.foto %}
+                                        <img src="{{ evento.foto.url }}" alt="{{ evento.titulo }}" 
+                                             class="rounded me-2" style="width: 50px; height: 50px; object-fit: cover;">
+                                        {% endif %}
+                                        <strong>{{ evento.titulo }}</strong>
+                                        <br><small class="text-muted">{{ evento.descripcion|truncatewords:8 }}</small>
+                                    </td>
+                                    <td>
+                                        {% if evento.organizador.logo %}
+                                        <img src="{{ evento.organizador.logo.url }}" alt="{{ evento.organizador.nombre }}" 
+                                             class="rounded me-2" style="width: 35px; height: 35px; object-fit: cover;">
+                                        {% endif %}
+                                        {{ evento.organizador.nombre }}
+                                    </td>
+                                    <td>
+                                        <i class="fa fa-calendar text-primary"></i> 
+                                        {{ evento.fecha_evento|date:"d/m/Y" }}
+                                    </td>
+                                    <td>
+                                        <i class="fa fa-clock text-success"></i> 
+                                        {{ evento.hora_inicio|time:"H:i" }} - {{ evento.hora_fin|time:"H:i" }}
+                                    </td>
+                                    <td>
+                                        {% if evento.sala %}
+                                            {{ evento.sala.nombre }}
+                                        {% else %}
+                                            <span class="text-muted">Sin sala</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">
+                                            <i class="fa fa-users"></i> {{ evento.capacidad_maxima }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if evento.tipo_evento == 'networking' %}
+                                            <span class="badge bg-primary">Networking</span>
+                                        {% elif evento.tipo_evento == 'capacitacion' %}
+                                            <span class="badge bg-success">Capacitación</span>
+                                        {% elif evento.tipo_evento == 'conferencia' %}
+                                            <span class="badge bg-warning text-dark">Conferencia</span>
+                                        {% elif evento.tipo_evento == 'social' %}
+                                            <span class="badge bg-info">Social</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if evento.publico %}
+                                            <span class="badge bg-success">
+                                                <i class="fa fa-globe"></i> Público
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">
+                                                <i class="fa fa-lock"></i> Privado
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'editar_evento' evento.id %}" 
+                                           class="btn btn-sm btn-warning" title="Editar">
+                                            <i class="fa fa-edit"></i>
+                                        </a>
+                                        {% if user.is_superuser %}
+                                        <button onclick="confirmarEliminacion(this)" 
+                                                data-url="{% url 'eliminar_evento' evento.id %}"
+                                                class="btn btn-sm btn-danger" title="Eliminar">
+                                            <i class="fa fa-trash"></i>
+                                        </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="10" class="text-center">
+                                        <div class="py-4">
+                                            <i class="fa fa-calendar-times fa-3x text-muted mb-3"></i>
+                                            <p class="text-muted">No hay eventos registrados.</p>
+                                            {% if user.is_superuser %}
+                                            <a href="{% url 'nuevo_evento' %}" class="btn btn-primary">
+                                                <i class="fa fa-plus"></i> Crear Primer Evento
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Próximos Eventos -->
+        {% if eventos %}
+        <div class="row mt-5">
+            <div class="col-md-12">
+                <h4 class="mb-4"><i class="fa fa-calendar-alt"></i> Próximos Eventos Destacados</h4>
+            </div>
+        </div>
+        
+        <div class="row">
+            {% for evento in eventos|slice:":3" %}
+            <div class="col-md-4 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    {% if evento.foto %}
+                    <img src="{{ evento.foto.url }}" class="card-img-top" alt="{{ evento.titulo }}" 
+                         style="height: 200px; object-fit: cover;">
+                    {% else %}
+                    <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" 
+                         style="height: 200px;">
+                        <i class="fa fa-star fa-3x text-white"></i>
+                    </div>
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title">{{ evento.titulo }}</h5>
+                        <p class="card-text">{{ evento.descripcion|truncatewords:15 }}</p>
+                        <ul class="list-unstyled">
+                            <li><i class="fa fa-building text-primary"></i> {{ evento.organizador.nombre }}</li>
+                            <li><i class="fa fa-calendar text-success"></i> {{ evento.fecha_evento|date:"d/m/Y" }}</li>
+                            <li><i class="fa fa-clock text-warning"></i> {{ evento.hora_inicio|time:"H:i" }}</li>
+                            <li><i class="fa fa-users text-info"></i> Capacidad: {{ evento.capacidad_maxima }}</li>
+                        </ul>
+                    </div>
+                    <div class="card-footer bg-white border-0">
+                        <div class="d-flex justify-content-between align-items-center">
+                            {% if evento.publico %}
+                                <span class="badge bg-success">Público</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Privado</span>
+                            {% endif %}
+                            <a href="{% url 'editar_evento' evento.id %}" class="btn btn-sm btn-primary">
+                                Ver Detalles
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // DataTable con exportación
+    $('#tablaEventos').DataTable({
+        language: dtEspanol,
+        dom: 'Bfrtip',
+        buttons: [
+            { extend: 'excel', text: '<i class="fa fa-file-excel"></i> Excel', className: 'btn btn-success btn-sm' },
+            { extend: 'pdf', text: '<i class="fa fa-file-pdf"></i> PDF', className: 'btn btn-danger btn-sm' },
+            { extend: 'csv', text: '<i class="fa fa-file-csv"></i> CSV', className: 'btn btn-info btn-sm' }
+        ],
+        order: [[3, 'desc']], // Ordenar por fecha descendente
+        pageLength: 10
+    });
+});
+
+// Tour guiado del Listado de Eventos
+{% if user.is_authenticated %}
+setTimeout(function() {
+    if (!localStorage.getItem('tour_listado_eventos')) {
+        const driver = window.driver.js.driver;
+        const driverObj = driver({
+            showProgress: true,
+            showButtons: ['next', 'previous', 'close'],
+            nextBtnText: 'Siguiente',
+            prevBtnText: 'Anterior',
+            doneBtnText: '¡Entendido!',
+            steps: [
+                { 
+                    popover: { 
+                        title: '⭐ Eventos del Coworking', 
+                        description: 'Aquí puedes ver todos los eventos de networking, capacitaciones y conferencias.',
+                        side: 'center'
+                    }
+                },
+                { 
+                    element: '#tablaEventos', 
+                    popover: { 
+                        title: '📋 Listado de Eventos', 
+                        description: 'Cada evento muestra organizador, fecha, horario, sala asignada, capacidad, tipo y visibilidad (público/privado).',
+                        side: "top",
+                        align: 'center'
+                    }
+                },
+                {% if user.is_superuser %}
+                { 
+                    element: '.btn-primary:first', 
+                    popover: { 
+                        title: '➕ Nuevo Evento', 
+                        description: 'Como administrador, puedes crear eventos para la comunidad del coworking.',
+                        side: "bottom"
+                    }
+                },
+                {% endif %}
+                { 
+                    popover: { 
+                        title: '✅ ¡Genial!', 
+                        description: 'Ya conoces el sistema de eventos. {% if user.is_superuser %}Crea eventos para fomentar el networking.{% else %}Participa en los eventos disponibles.{% endif %}',
+                        side: 'center'
+                    }
+                }
+            ]
+        });
+        
+        driverObj.drive();
+        localStorage.setItem('tour_listado_eventos', 'true');
+    }
+}, 1500);
+{% endif %}
+</script>
+{% endblock %}

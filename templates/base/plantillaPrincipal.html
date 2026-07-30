@@ -1,0 +1,291 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <title>{% block titulo %}CoworkSpace KC{% endblock %} - Plataforma de Reservas</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css?family=Poppins:200,300,400,500,600,700,800,900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Playfair+Display:400,400i,500,500i,600,600i,700,700i&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome CDN -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    
+    <!-- Bootstrap 5 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+ 
+    <!-- Animate CSS CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    
+    <!-- Owl Carousel CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.theme.default.min.css">
+    
+    <!-- Magnific Popup CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/magnific-popup.js/1.1.0/magnific-popup.min.css">
+
+    <!-- DataTables CDN -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.3.8/css/dataTables.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/3.2.6/css/buttons.dataTables.min.css">
+    
+    <!-- Bootstrap FileInput CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-fileinput/5.5.4/css/fileinput.min.css">
+    
+    <!-- SweetAlert2 CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    
+    <!-- FullCalendar CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css">
+    
+    <!-- jQuery UI CDN (para draggable) -->
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+    
+    <!-- Estilos locales de la plantilla -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    
+    <!-- Paleta de colores personalizada -->
+    <link rel="stylesheet" href="{% static 'css/custom-colors.css' %}">
+    
+    <!-- Corrección agresiva de espaciado (DEBE SER EL ÚLTIMO) -->
+    <link rel="stylesheet" href="{% static 'css/spacing-fix.css' %}">
+    
+    {% block estilos_extra %}{% endblock %}
+</head>
+<body>
+    <!-- Top Bar -->
+    <div class="wrap">
+        <div class="container">
+            <div class="row justify-content-between">
+                <div class="col d-flex align-items-center">
+                    <p class="mb-0 phone">
+                        <span class="mailus">Teléfono:</span> <a href="#">+593 999 999 999</a> o 
+                        <span class="mailus">Email:</span> <a href="#">info@coworkspacekc.com</a>
+                    </p>
+                </div>
+                <div class="col d-flex justify-content-end align-items-center">
+                    {% if user.is_authenticated %}
+                        <span class="text-white me-3">Bienvenido, {{ user.username }}</span>
+                        <a href="{% url 'logout' %}" class="btn btn-sm btn-outline-light">Cerrar Sesión</a>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="btn btn-sm btn-outline-light me-2">Iniciar Sesión</a>
+                        <a href="{% url 'registro' %}" class="btn btn-sm btn-light">Registrarse</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark ftco_navbar bg-dark ftco-navbar-light" id="ftco-navbar">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'inicio' %}">CoworkSpace<span>KC</span></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#ftco-nav" 
+                    aria-controls="ftco-nav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="fa fa-bars"></span> Menú
+            </button>
+            <div class="collapse navbar-collapse" id="ftco-nav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a href="{% url 'inicio' %}" class="nav-link">Inicio</a></li>
+                    
+                    {% if user.is_authenticated %}
+                        {% if user.is_superuser %}
+                        <li class="nav-item"><a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a></li>
+                        {% endif %}
+                        
+                        <li class="nav-item"><a href="{% url 'empresa_lista' %}" class="nav-link">Empresas</a></li>
+                        
+                        <li class="nav-item"><a href="{% url 'sala_lista' %}" class="nav-link">Salas</a></li>
+                        
+                        <li class="nav-item"><a href="{% url 'escritorio_lista' %}" class="nav-link">Escritorios</a></li>
+                        
+                        <li class="nav-item"><a href="{% url 'escritorio_mapa' %}" class="nav-link">Mapa</a></li>
+                        
+                        <li class="nav-item"><a href="{% url 'reserva_calendario' %}" class="nav-link">Reservas</a></li>
+                        
+                        <li class="nav-item"><a href="{% url 'evento_lista' %}" class="nav-link">Eventos</a></li>
+                        
+                        {% if user.is_superuser %}
+                        <li class="nav-item"><a href="{% url 'factura_lista' %}" class="nav-link">Facturas</a></li>
+                        
+                        <li class="nav-item"><a href="{% url 'reportes' %}" class="nav-link">Reportes</a></li>
+                        
+                        <li class="nav-item"><a href="/admin/" class="nav-link">Admin</a></li>
+                        {% endif %}
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <!-- END nav -->
+
+    <!-- Contenido Principal -->
+    {% block contenido %}
+    {% endblock %}
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6 col-lg-3 mb-4 mb-md-0">
+                    <h2 class="footer-heading">CoworkSpace KC</h2>
+                    <p>Tu espacio de trabajo ideal. Reserva salas, escritorios y participa en eventos exclusivos.</p>
+                    <ul class="ftco-footer-social p-0">
+                        <li class="ftco-animate"><a href="#"><span class="fa fa-twitter"></span></a></li>
+                        <li class="ftco-animate"><a href="#"><span class="fa fa-facebook"></span></a></li>
+                        <li class="ftco-animate"><a href="#"><span class="fa fa-instagram"></span></a></li>
+                    </ul>
+                </div>
+                <div class="col-md-6 col-lg-3 mb-4 mb-md-0">
+                    <h2 class="footer-heading">Enlaces Rápidos</h2>
+                    <ul class="list-unstyled">
+                        <li><a href="{% url 'inicio' %}" class="py-1 d-block">Inicio</a></li>
+                        <li><a href="{% url 'sala_lista' %}" class="py-1 d-block">Salas</a></li>
+                        <li><a href="{% url 'evento_lista' %}" class="py-1 d-block">Eventos</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-6 col-lg-3 mb-4 mb-md-0">
+                    <h2 class="footer-heading">Contacto</h2>
+                    <div class="block-23 mb-3">
+                        <ul>
+                            <li><span class="icon fa fa-map"></span><span class="text">Latacunga, Ecuador</span></li>
+                            <li><a href="#"><span class="icon fa fa-phone"></span><span class="text">+593 999 999 999</span></a></li>
+                            <li><a href="#"><span class="icon fa fa-paper-plane"></span><span class="text">info@coworkspacekc.com</span></a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3 mb-4 mb-md-0">
+                    <h2 class="footer-heading">Horario</h2>
+                    <ul class="list-unstyled">
+                        <li>Lunes - Viernes: 7:00 AM - 10:00 PM</li>
+                        <li>Sábado: 8:00 AM - 6:00 PM</li>
+                        <li>Domingo: Cerrado</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="row mt-5">
+                <div class="col-md-12 text-center">
+                    <p class="copyright">
+                        Copyright &copy; 2026 CoworkSpace KC | Diseñado por KC
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <!-- jQuery CDN -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    
+    <!-- Bootstrap 5 Bundle CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- jQuery Migrate CDN -->
+    <script src="https://code.jquery.com/jquery-migrate-3.4.1.min.js"></script>
+    
+    <!-- jQuery Easing CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.4.1/jquery.easing.min.js"></script>
+    
+    <!-- Owl Carousel CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
+    
+    <!-- Waypoints CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/waypoints/4.0.1/jquery.waypoints.min.js"></script>
+    
+    <!-- Magnific Popup CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/magnific-popup.js/1.1.0/jquery.magnific-popup.min.js"></script>
+    
+    <!-- Animate Number CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-animateNumber/0.0.14/jquery.animateNumber.min.js"></script>
+    
+    <!-- DataTables CDN -->
+    <script src="https://cdn.datatables.net/2.3.8/js/dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/3.2.6/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+    <script src="https://cdn.datatables.net/buttons/3.2.6/js/buttons.html5.min.js"></script>
+    
+    <!-- Bootstrap FileInput CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-fileinput/5.5.4/js/fileinput.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-fileinput/5.5.4/js/locales/es.min.js"></script>
+    
+    <!-- SweetAlert2 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
+    
+    <!-- FullCalendar CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+    
+    <!-- jQuery UI CDN (para draggable) -->
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    
+    <!-- Hotkeys.js CDN (para atajos de teclado) -->
+    <script src="https://cdn.jsdelivr.net/npm/hotkeys-js@3.12.0/dist/hotkeys.min.js"></script>
+    
+    <!-- Driver.js CDN (para tour guiado) -->
+    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.js.iife.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.css"/>
+    
+    <!-- Scripts locales de la plantilla -->
+    <script src="{% static 'js/main.js' %}"></script>
+
+    <!-- Traducción DataTables Español -->
+    <script>
+    const dtEspanol = {
+        emptyTable: 'No hay datos disponibles en la tabla',
+        zeroRecords: 'No se encontraron resultados',
+        info: 'Mostrando _START_ a _END_ de _TOTAL_ registros',
+        infoEmpty: 'Mostrando 0 a 0 de 0 registros',
+        infoFiltered: '(filtrado de _MAX_ registros totales)',
+        search: 'Buscar:',
+        lengthMenu: 'Mostrar _MENU_ registros',
+        paginate: {
+            first: 'Primero',
+            last: 'Último',
+            next: 'Siguiente',
+            previous: 'Anterior'
+        }
+    };
+    </script>
+
+    <!-- SweetAlert Confirmación Eliminar -->
+    <script>
+    function confirmarEliminacion(btn) {
+        var url = btn.getAttribute('data-url');
+        Swal.fire({
+            title: '¿Está seguro?',
+            text: '¡Esta acción no se puede revertir!',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then(function(result) {
+            if (result.isConfirmed) {
+                window.location.href = url;
+            }
+        });
+    }
+    </script>
+
+    <!-- Mensajes Django con SweetAlert -->
+    {% if messages %}
+        {% for mensaje in messages %}
+        <script>
+        Swal.fire({
+            title: "{% if mensaje.tags == 'error' %}Error{% else %}Confirmación{% endif %}",
+            icon: "{% if mensaje.tags == 'error' %}error{% else %}success{% endif %}",
+            text: "{{ mensaje }}",
+            timer: 2500,
+            showConfirmButton: false
+        });
+        </script>
+        {% endfor %}
+    {% endif %}
+
+    {% block scripts %}
+    {% endblock %}
+</body>
+</html>

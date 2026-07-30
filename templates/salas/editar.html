@@ -1,0 +1,194 @@
+{% extends 'base/plantillaPrincipal.html' %}
+{% load static %}
+
+{% block titulo %}Editar Sala{% endblock %}
+
+{% block contenido %}
+<section class="ftco-section bg-light">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="bg-white p-4 rounded shadow-sm">
+                    <h4 class="mb-4"><i class="fa fa-edit"></i> Editar Sala: {{ sala.nombre }}</h4>
+                    
+                    <form action="{% url 'procesar_edicion_sala' %}" method="POST" enctype="multipart/form-data" 
+                          id="formEditarSala" novalidate>
+                        {% csrf_token %}
+                        <input type="hidden" name="id" value="{{ sala.id }}">
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="nombre" class="form-label">Nombre de la Sala *</label>
+                                <input type="text" class="form-control" name="nombre" id="nombre" 
+                                       value="{{ sala.nombre }}">
+                                <div id="errorNombre" class="text-danger small"></div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="capacidad" class="form-label">Capacidad (personas) *</label>
+                                <input type="number" class="form-control" name="capacidad" id="capacidad" 
+                                       value="{{ sala.capacidad }}" min="1">
+                                <div id="errorCapacidad" class="text-danger small"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="metros_cuadrados" class="form-label">Metros Cuadrados *</label>
+                                <input type="number" step="0.01" class="form-control" name="metros_cuadrados" 
+                                       id="metros_cuadrados" value="{{ sala.metros_cuadrados }}" min="0">
+                                <div id="errorMetros" class="text-danger small"></div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="piso" class="form-label">Piso *</label>
+                                <select class="form-select" name="piso" id="piso">
+                                    <option value="1" {% if sala.piso == 1 %}selected{% endif %}>Piso 1</option>
+                                    <option value="2" {% if sala.piso == 2 %}selected{% endif %}>Piso 2</option>
+                                    <option value="3" {% if sala.piso == 3 %}selected{% endif %}>Piso 3</option>
+                                </select>
+                                <div id="errorPiso" class="text-danger small"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="precio_hora" class="form-label">Precio por Hora ($) *</label>
+                                <input type="number" step="0.01" class="form-control" name="precio_hora" 
+                                       id="precio_hora" value="{{ sala.precio_hora }}" min="0">
+                                <div id="errorPrecio" class="text-danger small"></div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="equipamiento" class="form-label">Equipamiento *</label>
+                                <select class="form-select" name="equipamiento" id="equipamiento">
+                                    <option value="basico" {% if sala.equipamiento == 'basico' %}selected{% endif %}>
+                                        Básico (Mesa y Sillas)
+                                    </option>
+                                    <option value="ejecutivo" {% if sala.equipamiento == 'ejecutivo' %}selected{% endif %}>
+                                        Ejecutivo (+ Proyector)
+                                    </option>
+                                    <option value="premium" {% if sala.equipamiento == 'premium' %}selected{% endif %}>
+                                        Premium (+ TV, Videoconferencia)
+                                    </option>
+                                </select>
+                                <div id="errorEquipamiento" class="text-danger small"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="foto" class="form-label">Foto de la Sala</label>
+                            <input type="file" class="form-control" name="foto" id="foto" accept="image/*">
+                            <small class="text-muted">Dejar vacío para mantener la foto actual</small>
+                        </div>
+                        
+                        {% if sala.foto %}
+                        <div class="mb-3">
+                            <label class="form-label">Foto Actual:</label><br>
+                            <img src="{{ sala.foto.url }}" alt="{{ sala.nombre }}" 
+                                 class="img-thumbnail" style="max-width: 300px;">
+                        </div>
+                        {% endif %}
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" name="activo" id="activo" 
+                                   {% if sala.activo %}checked{% endif %}>
+                            <label class="form-check-label" for="activo">
+                                Sala Activa
+                            </label>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'sala_lista' %}" class="btn btn-secondary">
+                                <i class="fa fa-arrow-left"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fa fa-save"></i> Actualizar Sala
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Bootstrap FileInput con preview
+{% if sala.foto %}
+$("#foto").fileinput({
+    language: "es",
+    allowedFileExtensions: ["png", "jpg", "jpeg"],
+    showCaption: false,
+    dropZoneEnabled: true,
+    showClose: false,
+    browseLabel: "Cambiar foto...",
+    removeLabel: "Quitar",
+    initialPreview: ['<img src="{{ sala.foto.url }}" class="file-preview-image" style="height:160px;">'],
+    initialPreviewConfig: [{ caption: "{{ sala.foto.name }}", showDelete: false }],
+    overwriteInitial: true
+});
+{% else %}
+$("#foto").fileinput({
+    language: "es",
+    allowedFileExtensions: ["png", "jpg", "jpeg"],
+    showCaption: false,
+    dropZoneEnabled: true,
+    showClose: false,
+    browseLabel: "Seleccionar foto...",
+    removeLabel: "Quitar"
+});
+{% endif %}
+$(".fileinput-upload").hide();
+
+// Validaciones (mismas que nuevo)
+document.getElementById('formEditarSala').addEventListener('submit', function(e) {
+    let valido = true;
+    
+    const nombre = document.getElementById('nombre').value.trim();
+    const errorNombre = document.getElementById('errorNombre');
+    if (nombre === '' || nombre.length < 3) {
+        errorNombre.textContent = 'El nombre debe tener al menos 3 caracteres.';
+        valido = false;
+    } else {
+        errorNombre.textContent = '';
+    }
+    
+    const capacidad = parseInt(document.getElementById('capacidad').value);
+    if (isNaN(capacidad) || capacidad < 1) {
+        document.getElementById('errorCapacidad').textContent = 'La capacidad debe ser mayor a 0.';
+        valido = false;
+    } else {
+        document.getElementById('errorCapacidad').textContent = '';
+    }
+    
+    const metros = parseFloat(document.getElementById('metros_cuadrados').value);
+    if (isNaN(metros) || metros <= 0) {
+        document.getElementById('errorMetros').textContent = 'Los metros cuadrados deben ser mayores a 0.';
+        valido = false;
+    } else {
+        document.getElementById('errorMetros').textContent = '';
+    }
+    
+    const piso = parseInt(document.getElementById('piso').value);
+    if (isNaN(piso) || piso < 1) {
+        document.getElementById('errorPiso').textContent = 'El piso debe ser mayor a 0.';
+        valido = false;
+    } else {
+        document.getElementById('errorPiso').textContent = '';
+    }
+    
+    const precio = parseFloat(document.getElementById('precio_hora').value);
+    if (isNaN(precio) || precio <= 0) {
+        document.getElementById('errorPrecio').textContent = 'El precio debe ser mayor a 0.';
+        valido = false;
+    } else {
+        document.getElementById('errorPrecio').textContent = '';
+    }
+    
+    if (!valido) e.preventDefault();
+});
+</script>
+{% endblock %}

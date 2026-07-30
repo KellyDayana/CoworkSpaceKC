@@ -1,0 +1,737 @@
+/* 
+ * Paleta de Colores Personalizada CoworkSpace KC
+ * Paleta azul profesional - Tonos de azul claro a oscuro
+ * Aplicando psicología del color para máxima legibilidad
+ */
+
+:root {
+    --color-azul-muy-claro: #B4C5D8;
+    --color-azul-claro: #6B89A8;
+    --color-azul-medio: #4A6785;
+    --color-azul-oscuro: #2D4A64;
+    --color-azul-muy-oscuro: #1A2E42;
+    --color-negro-azulado: #0D1B2A;
+    --color-texto-oscuro: #1A2E42;
+    --color-texto-claro: #ffffff;
+}
+
+/* ========================================
+   TOP BAR - Fondo oscuro, texto blanco
+   ======================================== */
+.wrap {
+    background: var(--color-azul-oscuro) !important;
+    color: var(--color-texto-claro) !important;
+}
+
+.wrap p,
+.wrap span,
+.wrap a {
+    color: var(--color-texto-claro) !important;
+}
+
+.wrap a:hover {
+    color: var(--color-texto-claro) !important;
+    opacity: 0.85;
+}
+
+.wrap .btn-outline-light {
+    color: var(--color-texto-claro) !important;
+    border-color: var(--color-texto-claro) !important;
+}
+
+.wrap .btn-outline-light:hover {
+    background-color: var(--color-texto-claro) !important;
+    color: var(--color-azul-oscuro) !important;
+}
+
+.wrap .btn-light,
+.wrap .btn-sm {
+    background-color: var(--color-texto-claro) !important;
+    color: var(--color-azul-oscuro) !important;
+    border-color: var(--color-texto-claro) !important;
+}
+
+/* ========================================
+   NAVBAR - Fondo muy oscuro, texto blanco
+   ======================================== */
+.ftco_navbar,
+.ftco-navbar-light {
+    background: var(--color-azul-muy-oscuro) !important;
+    padding: 0.5rem 1rem !important;
+    margin-bottom: 0 !important;
+}
+
+.navbar {
+    margin-bottom: 0 !important;
+}
+
+.navbar-brand {
+    color: var(--color-texto-claro) !important;
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+}
+
+.navbar-brand:hover,
+.navbar-brand:focus {
+    color: var(--color-texto-claro) !important;
+}
+
+.navbar-brand span {
+    color: var(--color-texto-claro) !important;
+}
+
+.nav-link {
+    color: var(--color-texto-claro) !important;
+    padding: 0.5rem 1rem !important;
+}
+
+.nav-link:hover,
+.nav-link:focus {
+    color: var(--color-texto-claro) !important;
+    opacity: 0.85;
+}
+
+.nav-item.active .nav-link {
+    color: var(--color-texto-claro) !important;
+}
+
+.navbar-toggler {
+    border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.navbar-toggler .fa-bars {
+    color: var(--color-texto-claro) !important;
+}
+
+/* Dropdown menus - Fondo blanco, texto oscuro */
+.dropdown-menu {
+    background-color: var(--color-texto-claro) !important;
+}
+
+.dropdown-menu .dropdown-item {
+    color: var(--color-texto-oscuro) !important;
+}
+
+.dropdown-menu .dropdown-item:hover {
+    background-color: var(--color-azul-medio) !important;
+    color: var(--color-texto-claro) !important;
+}
+
+/* ========================================
+   HERO SECTIONS - Fondo oscuro, texto blanco
+   ======================================== */
+.hero-wrap {
+    background: linear-gradient(135deg, var(--color-azul-oscuro) 0%, var(--color-negro-azulado) 100%) !important;
+    color: var(--color-texto-claro) !important;
+    padding: 40px 0 !important;
+    margin-bottom: 0 !important;
+}
+
+.hero-wrap h1,
+.hero-wrap h2,
+.hero-wrap h3,
+.hero-wrap p,
+.hero-wrap span {
+    color: var(--color-texto-claro) !important;
+}
+
+.hero-wrap .subheading {
+    color: var(--color-azul-muy-claro) !important;
+}
+
+/* ========================================
+   CARDS - Fondo blanco, texto oscuro
+   ======================================== */
+.card {
+    background-color: var(--color-texto-claro) !important;
+    border-color: var(--color-azul-claro) !important;
+    color: var(--color-texto-oscuro) !important;
+}
+
+.card-body {
+    color: var(--color-texto-oscuro) !important;
+}
+
+.card-title,
+.card-text {
+    color: var(--color-texto-oscuro) !important;
+}
+
+.card-header {
+    background: var(--color-azul-medio) !important;
+    color: var(--color-texto-claro) !important;
+}
+
+/* ========================================
+   BADGES Y ETIQUETAS
+   ======================================== */
+.badge.bg-primary {
+    background: var(--color-azul-medio) !important;
+    color: var(--color-texto-claro) !important;
+}
+
+.badge.bg-info {
+    background: var(--color-azul-claro) !important;
+    color: var(--color-texto-claro) !important;
+}
+
+.badge.bg-success {
+    background: #198754 !important;
+    color: var(--color-texto-claro) !important;
+}
+
+.badge.bg-warning {
+    background: #ffc107 !important;
+    color: var(--color-texto-oscuro) !important;
+}
+
+.badge.bg-danger {
+    background: #dc3545 !important;
+    color: var(--color-texto-claro) !important;
+}
+
+.badge.bg-secondary {
+    background: #6c757d !important;
+    color: var(--color-texto-claro) !important;
+}
+
+/* ========================================
+   BOTONES - Según fondo del botón
+   ======================================== */
+.btn-primary {
+    background: var(--color-azul-medio) !important;
+    border-color: var(--color-azul-medio) !important;
+    color: var(--color-texto-claro) !important;
+}
+
+.btn-primary:hover {
+    background: var(--color-azul-oscuro) !important;
+    border-color: var(--color-azul-oscuro) !important;
+    color: var(--color-texto-claro) !important;
+}
+
+.btn-info {
+    background: var(--color-azul-claro) !important;
+    border-color: var(--color-azul-claro) !important;
+    color: var(--color-texto-claro) !important;
+}
+
+.btn-warning {
+    background: #ffc107 !important;
+    border-color: #ffc107 !important;
+    color: var(--color-texto-oscuro) !important;
+}
+
+.btn-danger {
+    background: #dc3545 !important;
+    border-color: #dc3545 !important;
+    color: var(--color-texto-claro) !important;
+}
+
+.btn-secondary {
+    background: #6c757d !important;
+    border-color: #6c757d !important;
+    color: var(--color-texto-claro) !important;
+}
+
+.btn-outline-primary {
+    border-color: var(--color-azul-medio) !important;
+    color: var(--color-azul-medio) !important;
+}
+
+.btn-outline-primary:hover {
+    background: var(--color-azul-medio) !important;
+    color: var(--color-texto-claro) !important;
+}
+
+/* ========================================
+   FOOTER - Fondo muy oscuro, texto blanco
+   ======================================== */
+.footer {
+    background: var(--color-azul-muy-oscuro) !important;
+    color: var(--color-texto-claro) !important;
+}
+
+.footer h2,
+.footer p,
+.footer li,
+.footer span {
+    color: var(--color-texto-claro) !important;
+}
+
+.footer a {
+    color: var(--color-texto-claro) !important;
+}
+
+.footer a:hover {
+    color: var(--color-azul-muy-claro) !important;
+}
+
+.footer-heading {
+    color: var(--color-texto-claro) !important;
+}
+
+/* ========================================
+   TABLAS - Headers oscuros, contenido claro
+   ======================================== */
+.table-dark,
+thead.table-dark {
+    background: var(--color-azul-oscuro) !important;
+    color: var(--color-texto-claro) !important;
+}
+
+thead.table-dark th {
+    background: var(--color-azul-oscuro) !important;
+    border-color: var(--color-azul-medio) !important;
+    color: var(--color-texto-claro) !important;
+}
+
+.table-light {
+    background: var(--color-texto-claro) !important;
+    color: var(--color-texto-oscuro) !important;
+}
+
+thead.table-light th {
+    background: #f8f9fa !important;
+    color: var(--color-texto-oscuro) !important;
+}
+
+tbody tr {
+    color: var(--color-texto-oscuro) !important;
+}
+
+/* ========================================
+   NAVEGACIÓN - Elementos activos
+   ======================================== */
+.nav-link.active,
+.nav-tabs .nav-link.active {
+    color: var(--color-azul-oscuro) !important;
+    border-color: var(--color-azul-claro) !important;
+}
+
+/* ========================================
+   FORMULARIOS - Texto oscuro en inputs
+   ======================================== */
+.form-control,
+.form-select {
+    color: var(--color-texto-oscuro) !important;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--color-azul-medio) !important;
+    box-shadow: 0 0 0 0.25rem rgba(74, 103, 133, 0.25) !important;
+    color: var(--color-texto-oscuro) !important;
+}
+
+.form-label {
+    color: var(--color-texto-oscuro) !important;
+}
+
+/* ========================================
+   PROGRESS BARS
+   ======================================== */
+.progress-bar {
+    background: var(--color-azul-medio) !important;
+    color: var(--color-texto-claro) !important;
+}
+
+/* ========================================
+   LINKS GENERALES - Según contexto
+   ======================================== */
+a {
+    color: var(--color-azul-medio) !important;
+}
+
+a:hover {
+    color: var(--color-azul-oscuro) !important;
+}
+
+/* Links en fondos oscuros */
+.bg-dark a,
+.hero-wrap a,
+.footer a,
+.navbar a {
+    color: var(--color-texto-claro) !important;
+}
+
+/* ========================================
+   TÍTULOS Y SUBTÍTULOS
+   ======================================== */
+.subheading {
+    color: var(--color-azul-medio) !important;
+}
+
+.heading-section h2 {
+    color: var(--color-texto-oscuro) !important;
+}
+
+/* En fondos oscuros */
+.hero-wrap .subheading {
+    color: var(--color-azul-muy-claro) !important;
+}
+
+.hero-wrap h1,
+.hero-wrap h2 {
+    color: var(--color-texto-claro) !important;
+}
+
+/* ========================================
+   ICONOS
+   ======================================== */
+.text-primary,
+.fa.text-primary,
+i.text-primary {
+    color: var(--color-azul-medio) !important;
+}
+
+/* Iconos en fondos oscuros */
+.hero-wrap .fa,
+.hero-wrap i,
+.card-header .fa,
+.card-header i {
+    color: var(--color-texto-claro) !important;
+}
+
+/* ========================================
+   BORDES Y DIVISORES
+   ======================================== */
+hr {
+    border-color: var(--color-azul-claro) !important;
+    opacity: 0.3;
+}
+
+/* ========================================
+   SOMBRAS
+   ======================================== */
+.shadow-sm {
+    box-shadow: 0 .125rem .25rem rgba(74, 103, 133, 0.075) !important;
+}
+
+.shadow {
+    box-shadow: 0 .5rem 1rem rgba(74, 103, 133, 0.15) !important;
+}
+
+/* ========================================
+   ALERTS
+   ======================================== */
+.alert-info {
+    background-color: rgba(180, 197, 216, 0.2) !important;
+    border-color: var(--color-azul-claro) !important;
+    color: var(--color-azul-oscuro) !important;
+}
+
+.alert-success {
+    background-color: rgba(25, 135, 84, 0.2) !important;
+    color: #0f5132 !important;
+}
+
+.alert-warning {
+    background-color: rgba(255, 193, 7, 0.2) !important;
+    color: #664d03 !important;
+}
+
+.alert-danger {
+    background-color: rgba(220, 53, 69, 0.2) !important;
+    color: #842029 !important;
+}
+
+/* ========================================
+   PAGINATION
+   ======================================== */
+.page-link {
+    color: var(--color-azul-medio) !important;
+}
+
+.page-link:hover {
+    background-color: var(--color-azul-claro) !important;
+    border-color: var(--color-azul-claro) !important;
+    color: var(--color-texto-claro) !important;
+}
+
+.page-item.active .page-link {
+    background-color: var(--color-azul-medio) !important;
+    border-color: var(--color-azul-medio) !important;
+    color: var(--color-texto-claro) !important;
+}
+
+/* ========================================
+   SPINNERS
+   ======================================== */
+.spinner-border.text-primary {
+    color: var(--color-azul-medio) !important;
+}
+
+/* ========================================
+   TOOLTIPS
+   ======================================== */
+.tooltip-inner {
+    background-color: var(--color-azul-oscuro) !important;
+    color: var(--color-texto-claro) !important;
+}
+
+/* ========================================
+   MODALES
+   ======================================== */
+.modal-header {
+    background: var(--color-azul-medio) !important;
+    color: var(--color-texto-claro) !important;
+}
+
+.modal-title {
+    color: var(--color-texto-claro) !important;
+}
+
+.modal-body {
+    color: var(--color-texto-oscuro) !important;
+}
+
+/* ========================================
+   BREADCRUMBS
+   ======================================== */
+.breadcrumb-item.active {
+    color: var(--color-azul-medio) !important;
+}
+
+.breadcrumb-item a {
+    color: var(--color-azul-claro) !important;
+}
+
+/* ========================================
+   LISTA DE GRUPOS
+   ======================================== */
+.list-group-item.active {
+    background-color: var(--color-azul-medio) !important;
+    border-color: var(--color-azul-medio) !important;
+    color: var(--color-texto-claro) !important;
+}
+
+/* ========================================
+   CHECKBOXES Y RADIOS
+   ======================================== */
+.form-check-input:checked {
+    background-color: var(--color-azul-medio) !important;
+    border-color: var(--color-azul-medio) !important;
+}
+
+.form-check-label {
+    color: var(--color-texto-oscuro) !important;
+}
+
+/* ========================================
+   HOVER EN CARDS
+   ======================================== */
+.card:hover {
+    box-shadow: 0 .5rem 1.5rem rgba(74, 103, 133, 0.2) !important;
+    transition: box-shadow 0.3s ease;
+}
+
+/* ========================================
+   BACKGROUNDS ALTERNOS
+   ======================================== */
+.bg-light-custom,
+.bg-light {
+    background-color: #f8f9fa !important;
+    color: var(--color-texto-oscuro) !important;
+}
+
+.bg-dark {
+    background-color: var(--color-azul-muy-oscuro) !important;
+    color: var(--color-texto-claro) !important;
+}
+
+/* ========================================
+   TEXTO MUTED
+   ======================================== */
+.text-muted {
+    color: #6c757d !important;
+}
+
+/* ========================================
+   SECCIONES CON FONDO
+   ======================================== */
+.ftco-section {
+    color: var(--color-texto-oscuro) !important;
+    padding: 3em 0 !important;
+}
+
+.ftco-section.bg-light {
+    padding: 3em 0 !important;
+}
+
+/* Reducir padding en heading sections */
+.heading-section {
+    margin-bottom: 2rem !important;
+}
+
+.heading-section.pb-5 {
+    padding-bottom: 1.5rem !important;
+}
+
+.row.pb-5 {
+    padding-bottom: 1.5rem !important;
+}
+
+.row.mb-3 {
+    margin-bottom: 1rem !important;
+}
+
+/* Ajustar espaciado general */
+section {
+    padding-top: 2em !important;
+    padding-bottom: 2em !important;
+}
+
+/* ========================================
+   SELECT2 Y OTROS PLUGINS
+   ======================================== */
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+    background-color: var(--color-azul-medio) !important;
+    color: var(--color-texto-claro) !important;
+}
+
+/* ========================================
+   DATABLES - Botones de exportación
+   ======================================== */
+.dt-button {
+    background: var(--color-azul-medio) !important;
+    color: var(--color-texto-claro) !important;
+    border-color: var(--color-azul-medio) !important;
+}
+
+.dt-button:hover {
+    background: var(--color-azul-oscuro) !important;
+    color: var(--color-texto-claro) !important;
+}
+
+/* ========================================
+   SCROLLBAR PERSONALIZADO
+   ======================================== */
+::-webkit-scrollbar-thumb {
+    background: var(--color-azul-claro) !important;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-azul-medio) !important;
+}
+
+/* ========================================
+   PROJECT WRAP (Estadísticas)
+   ======================================== */
+.project-wrap .text {
+    background: var(--color-texto-claro) !important;
+    color: var(--color-texto-oscuro) !important;
+}
+
+.project-wrap .text h3,
+.project-wrap .text span {
+    color: var(--color-texto-oscuro) !important;
+}
+
+
+
+/* ========================================
+   AJUSTES DE ESPACIADO GLOBAL
+   ======================================== */
+
+/* Eliminar espacios excesivos después del navbar */
+body {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Contenido principal sin margen superior excesivo */
+main,
+#main-content {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+/* Reducir espaciado entre navbar y contenido */
+nav + section,
+nav + div {
+    margin-top: 0 !important;
+}
+
+/* Ajustar containers */
+.container,
+.container-fluid {
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+}
+
+/* Reducir padding en secciones ftco */
+.ftco-section {
+    padding-top: 2rem !important;
+    padding-bottom: 2rem !important;
+}
+
+/* Hero sections más compactos */
+.hero-wrap {
+    padding-top: 2rem !important;
+    padding-bottom: 2rem !important;
+    margin-bottom: 0 !important;
+}
+
+/* Ajustar heading sections */
+.heading-section {
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+    margin-bottom: 1.5rem !important;
+}
+
+/* Reducir padding en rows */
+.row.justify-content-center.pb-5 {
+    padding-bottom: 1.5rem !important;
+}
+
+.row.justify-content-center.mb-3 {
+    margin-bottom: 1rem !important;
+}
+
+/* Cards sin espacios excesivos */
+.card {
+    margin-bottom: 1rem !important;
+}
+
+/* Tablas sin espacios excesivos */
+.table-responsive {
+    margin-top: 0.5rem !important;
+    margin-bottom: 0.5rem !important;
+}
+
+/* Ajustar formularios */
+form {
+    margin-top: 0 !important;
+}
+
+/* Botones con margen razonable */
+.btn {
+    margin: 0.25rem !important;
+}
+
+/* Espaciado entre columnas más compacto */
+.col-md-12,
+.col-lg-12 {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+}
+
+/* Dashboard cards más compactas */
+.col-md-3 .card,
+.col-md-4 .card,
+.col-md-6 .card {
+    margin-bottom: 1rem !important;
+}
+
+/* Eliminar espacios en wrap del top bar */
+.wrap {
+    padding: 0.5rem 0 !important;
+    margin: 0 !important;
+}
+
+/* Footer sin espacio excesivo arriba */
+.footer {
+    margin-top: 2rem !important;
+    padding-top: 2rem !important;
+}

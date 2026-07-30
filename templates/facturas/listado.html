@@ -1,0 +1,212 @@
+{% extends 'base/plantillaPrincipal.html' %}
+{% load static %}
+
+{% block titulo %}Facturas{% endblock %}
+
+{% block contenido %}
+<section class="ftco-section bg-light">
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h3><i class="fa fa-file-invoice-dollar"></i> Gestión de Facturas</h3>
+                    {% if user.is_superuser %}
+                    <a href="{% url 'nueva_factura' %}" class="btn btn-primary">
+                        <i class="fa fa-plus"></i> Nueva Factura
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-12">
+                <div class="bg-white p-4 rounded shadow-sm">
+                    <div class="table-responsive">
+                        <table id="tablaFacturas" class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Número</th>
+                                    <th>Empresa</th>
+                                    <th>Tipo</th>
+                                    <th>Emisión</th>
+                                    <th>Vencimiento</th>
+                                    <th>Subtotal</th>
+                                    <th>IVA</th>
+                                    <th>Total</th>
+                                    <th>Estado</th>
+                                    <th>PDF</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for factura in facturas %}
+                                <tr>
+                                    <td>
+                                        <strong class="text-primary">{{ factura.numero_factura }}</strong>
+                                    </td>
+                                    <td>
+                                        {% if factura.empresa.logo %}
+                                        <img src="{{ factura.empresa.logo.url }}" alt="{{ factura.empresa.nombre }}" 
+                                             class="rounded me-2" style="width: 35px; height: 35px; object-fit: cover;">
+                                        {% endif %}
+                                        {{ factura.empresa.nombre }}
+                                    </td>
+                                    <td>
+                                        {% if factura.tipo_factura == 'mensual' %}
+                                            <span class="badge bg-primary">Mensual</span>
+                                        {% elif factura.tipo_factura == 'reservas' %}
+                                            <span class="badge bg-info">Reservas</span>
+                                        {% elif factura.tipo_factura == 'evento' %}
+                                            <span class="badge bg-warning text-dark">Evento</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Otros</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <i class="fa fa-calendar text-primary"></i> 
+                                        {{ factura.fecha_emision|date:"d/m/Y" }}
+                                    </td>
+                                    <td>
+                                        <i class="fa fa-calendar-alt text-danger"></i> 
+                                        {{ factura.fecha_vencimiento|date:"d/m/Y" }}
+                                    </td>
+                                    <td>${{ factura.subtotal|floatformat:2 }}</td>
+                                    <td>${{ factura.iva|floatformat:2 }}</td>
+                                    <td>
+                                        <strong class="text-success">${{ factura.total|floatformat:2 }}</strong>
+                                    </td>
+                                    <td>
+                                        {% if factura.estado == 'pagada' %}
+                                            <span class="badge bg-success">
+                                                <i class="fa fa-check-circle"></i> Pagada
+                                            </span>
+                                        {% elif factura.estado == 'pendiente' %}
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="fa fa-clock"></i> Pendiente
+                                            </span>
+                                        {% elif factura.estado == 'vencida' %}
+                                            <span class="badge bg-danger">
+                                                <i class="fa fa-exclamation-triangle"></i> Vencida
+                                            </span>
+                                        {% elif factura.estado == 'cancelada' %}
+                                            <span class="badge bg-secondary">
+                                                <i class="fa fa-ban"></i> Cancelada
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if factura.pdf %}
+                                            <a href="{{ factura.pdf.url }}" target="_blank" 
+                                               class="btn btn-sm" style="background: #4A6785; color: white;" title="Ver PDF">
+                                                <i class="fa fa-file-pdf"></i> Ver PDF
+                                            </a>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Sin PDF</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'editar_factura' factura.id %}" 
+                                           class="btn btn-sm" style="background: #fd7e14; color: white;" title="Editar">
+                                            <i class="fa fa-edit"></i>
+                                        </a>
+                                        {% if user.is_superuser %}
+                                        <button onclick="confirmarEliminacion(this)" 
+                                                data-url="{% url 'eliminar_factura' factura.id %}"
+                                                class="btn btn-sm btn-danger" title="Eliminar">
+                                            <i class="fa fa-trash"></i>
+                                        </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="11" class="text-center">
+                                        <div class="py-4">
+                                            <i class="fa fa-file-invoice fa-3x text-muted mb-3"></i>
+                                            <p class="text-muted">No hay facturas registradas.</p>
+                                            {% if user.is_superuser %}
+                                            <a href="{% url 'nueva_factura' %}" class="btn btn-primary">
+                                                <i class="fa fa-plus"></i> Crear Primera Factura
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Estadísticas Simples -->
+        {% if facturas %}
+        <div class="row mt-4">
+            <div class="col-md-4 mb-3">
+                <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #4A6785 0%, #2D4A64 100%);">
+                    <div class="card-body text-center text-white">
+                        <i class="fa fa-file-invoice fa-2x mb-2"></i>
+                        <h3>{{ facturas.count }}</h3>
+                        <p class="mb-0">Total Facturas</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                    <div class="card-body text-center text-white">
+                        <i class="fa fa-check-circle fa-2x mb-2"></i>
+                        <h3>{{ facturas|dictsort:"estado"|length }}</h3>
+                        <p class="mb-0">Fact. Pagadas</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);">
+                    <div class="card-body text-center text-white">
+                        <i class="fa fa-clock fa-2x mb-2"></i>
+                        <h3>{{ facturas|dictsort:"estado"|length }}</h3>
+                        <p class="mb-0">Fact. Pendientes</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // DataTable con exportación
+    $('#tablaFacturas').DataTable({
+        language: dtEspanol,
+        dom: 'Bfrtip',
+        buttons: [
+            { 
+                extend: 'excel', 
+                text: '<i class="fa fa-file-excel"></i> Excel', 
+                className: 'btn btn-success btn-sm' 
+            },
+            { 
+                extend: 'pdf', 
+                text: '<i class="fa fa-file-pdf"></i> PDF', 
+                className: 'btn btn-sm',
+                attr: {
+                    style: 'background-color: #4A6785; color: white; border-color: #4A6785;'
+                }
+            },
+            { 
+                extend: 'csv', 
+                text: '<i class="fa fa-file-csv"></i> CSV', 
+                className: 'btn btn-info btn-sm' 
+            }
+        ],
+        order: [[3, 'desc']], // Ordenar por fecha de emisión descendente
+        pageLength: 10
+    });
+});
+</script>
+{% endblock %}

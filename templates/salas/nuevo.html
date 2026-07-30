@@ -1,0 +1,187 @@
+{% extends 'base/plantillaPrincipal.html' %}
+{% load static %}
+
+{% block titulo %}Nueva Sala de Reunión{% endblock %}
+
+{% block contenido %}
+<section class="ftco-section bg-light">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="bg-white p-4 rounded shadow-sm">
+                    <h4 class="mb-4"><i class="fa fa-door-open"></i> Registrar Nueva Sala</h4>
+                    
+                    <form action="{% url 'guardar_sala' %}" method="POST" enctype="multipart/form-data" 
+                          id="formNuevoSala" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="nombre" class="form-label">Nombre de la Sala *</label>
+                                <input type="text" class="form-control" name="nombre" id="nombre" 
+                                       placeholder="Ej: Sala Ejecutiva A">
+                                <div id="errorNombre" class="text-danger small"></div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="capacidad" class="form-label">Capacidad (personas) *</label>
+                                <input type="number" class="form-control" name="capacidad" id="capacidad" 
+                                       placeholder="Ej: 10" min="1">
+                                <div id="errorCapacidad" class="text-danger small"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="metros_cuadrados" class="form-label">Metros Cuadrados *</label>
+                                <input type="number" step="0.01" class="form-control" name="metros_cuadrados" 
+                                       id="metros_cuadrados" placeholder="Ej: 25.50" min="0">
+                                <div id="errorMetros" class="text-danger small"></div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="piso" class="form-label">Piso *</label>
+                                <select class="form-select" name="piso" id="piso">
+                                    <option value="">-- Seleccione un piso --</option>
+                                    <option value="1">Piso 1</option>
+                                    <option value="2">Piso 2</option>
+                                    <option value="3">Piso 3</option>
+                                </select>
+                                <div id="errorPiso" class="text-danger small"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="precio_hora" class="form-label">Precio por Hora ($) *</label>
+                                <input type="number" step="0.01" class="form-control" name="precio_hora" 
+                                       id="precio_hora" placeholder="Ej: 25.00" min="0">
+                                <div id="errorPrecio" class="text-danger small"></div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="equipamiento" class="form-label">Equipamiento *</label>
+                                <select class="form-select" name="equipamiento" id="equipamiento">
+                                    <option value="">-- Seleccione --</option>
+                                    <option value="basico">Básico (Mesa y Sillas)</option>
+                                    <option value="ejecutivo">Ejecutivo (+ Proyector)</option>
+                                    <option value="premium">Premium (+ TV, Videoconferencia)</option>
+                                </select>
+                                <div id="errorEquipamiento" class="text-danger small"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="foto" class="form-label">Foto de la Sala</label>
+                            <input type="file" class="form-control" name="foto" id="foto" accept="image/*">
+                            <small class="text-muted">Formatos: PNG, JPG, JPEG</small>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" name="activo" id="activo" checked>
+                            <label class="form-check-label" for="activo">
+                                Sala Activa
+                            </label>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'sala_lista' %}" class="btn btn-secondary">
+                                <i class="fa fa-arrow-left"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fa fa-save"></i> Guardar Sala
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Bootstrap FileInput para foto
+$("#foto").fileinput({
+    language: "es",
+    allowedFileExtensions: ["png", "jpg", "jpeg"],
+    showCaption: false,
+    dropZoneEnabled: true,
+    showClose: false,
+    browseLabel: "Seleccionar foto...",
+    removeLabel: "Quitar"
+});
+$(".fileinput-upload").hide();
+
+// Validaciones
+document.getElementById('formNuevoSala').addEventListener('submit', function(e) {
+    let valido = true;
+    
+    // Nombre
+    const nombre = document.getElementById('nombre').value.trim();
+    const errorNombre = document.getElementById('errorNombre');
+    if (nombre === '') {
+        errorNombre.textContent = 'El nombre es obligatorio.';
+        valido = false;
+    } else if (nombre.length < 3) {
+        errorNombre.textContent = 'El nombre debe tener al menos 3 caracteres.';
+        valido = false;
+    } else {
+        errorNombre.textContent = '';
+    }
+    
+    // Capacidad
+    const capacidad = parseInt(document.getElementById('capacidad').value);
+    const errorCapacidad = document.getElementById('errorCapacidad');
+    if (isNaN(capacidad) || capacidad < 1) {
+        errorCapacidad.textContent = 'La capacidad debe ser mayor a 0.';
+        valido = false;
+    } else {
+        errorCapacidad.textContent = '';
+    }
+    
+    // Metros cuadrados
+    const metros = parseFloat(document.getElementById('metros_cuadrados').value);
+    const errorMetros = document.getElementById('errorMetros');
+    if (isNaN(metros) || metros <= 0) {
+        errorMetros.textContent = 'Los metros cuadrados deben ser mayores a 0.';
+        valido = false;
+    } else {
+        errorMetros.textContent = '';
+    }
+    
+    // Piso
+    const piso = parseInt(document.getElementById('piso').value);
+    const errorPiso = document.getElementById('errorPiso');
+    if (isNaN(piso) || piso < 1) {
+        errorPiso.textContent = 'El piso debe ser mayor a 0.';
+        valido = false;
+    } else {
+        errorPiso.textContent = '';
+    }
+    
+    // Precio
+    const precio = parseFloat(document.getElementById('precio_hora').value);
+    const errorPrecio = document.getElementById('errorPrecio');
+    if (isNaN(precio) || precio <= 0) {
+        errorPrecio.textContent = 'El precio debe ser mayor a 0.';
+        valido = false;
+    } else {
+        errorPrecio.textContent = '';
+    }
+    
+    // Equipamiento
+    const equipamiento = document.getElementById('equipamiento').value;
+    const errorEquipamiento = document.getElementById('errorEquipamiento');
+    if (equipamiento === '') {
+        errorEquipamiento.textContent = 'Debe seleccionar el equipamiento.';
+        valido = false;
+    } else {
+        errorEquipamiento.textContent = '';
+    }
+    
+    if (!valido) e.preventDefault();
+});
+</script>
+{% endblock %}

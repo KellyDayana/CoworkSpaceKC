@@ -1,0 +1,179 @@
+{% extends 'base/plantillaPrincipal.html' %}
+{% load static %}
+
+{% block titulo %}Listado de Empresas{% endblock %}
+
+{% block contenido %}
+<section class="ftco-section bg-light">
+    <div class="container">
+        <div class="row justify-content-center pb-5 mb-3">
+            <div class="col-md-7 heading-section text-center ftco-animate">
+                <span class="subheading">Gestión</span>
+                <h2>Empresas Clientes</h2>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-12">
+                <div class="bg-white p-4 rounded shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4><i class="fa fa-building"></i> Listado de Empresas</h4>
+                        <a href="{% url 'nueva_empresa' %}" class="btn btn-primary">
+                            <i class="fa fa-plus"></i> Nueva Empresa
+                        </a>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table id="tblEmpresas" class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Logo</th>
+                                    <th>Nombre</th>
+                                    <th>RUC</th>
+                                    <th>Email</th>
+                                    <th>Teléfono</th>
+                                    <th>Plan</th>
+                                    <th>Estado</th>
+                                    <th>Miembros</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for empresa in empresas %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>
+                                        {% if empresa.logo %}
+                                            <img src="{{ empresa.logo.url }}" alt="{{ empresa.nombre }}" 
+                                                 class="rounded" style="width: 50px; height: 50px; object-fit: cover;">
+                                        {% else %}
+                                            <i class="fa fa-building fa-2x text-muted"></i>
+                                        {% endif %}
+                                    </td>
+                                    <td><strong>{{ empresa.nombre }}</strong></td>
+                                    <td>{{ empresa.ruc }}</td>
+                                    <td>{{ empresa.email }}</td>
+                                    <td>{{ empresa.telefono }}</td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if empresa.plan == 'empresarial' %}bg-success
+                                            {% elif empresa.plan == 'profesional' %}bg-primary
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ empresa.get_plan_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if empresa.activo %}
+                                            <span class="badge bg-success">Activo</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Inactivo</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'miembro_lista' empresa.id %}" class="btn btn-sm btn-info">
+                                            <i class="fa fa-users"></i> {{ empresa.miembros.count }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{% url 'editar_empresa' empresa.id %}" 
+                                               class="btn btn-sm btn-warning" title="Editar">
+                                                <i class="fa fa-edit"></i>
+                                            </a>
+                                            <a href="#" 
+                                               data-url="{% url 'eliminar_empresa' empresa.id %}"
+                                               onclick="event.preventDefault(); confirmarEliminacion(this)"
+                                               class="btn btn-sm btn-danger" title="Eliminar">
+                                                <i class="fa fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="10" class="text-center">No hay empresas registradas</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    new DataTable('#tblEmpresas', {
+        layout: {
+            topStart: {
+                buttons: ['copyHtml5', 'excelHtml5', 'csvHtml5', 'pdfHtml5']
+            }
+        },
+        language: dtEspanol,
+        columnDefs: [
+            { orderable: false, targets: [1, -1] }  // Logo y Acciones no ordenables
+        ],
+        order: [[2, 'asc']]  // Ordenar por nombre
+    });
+});
+
+// Tour guiado del Listado de Empresas
+{% if user.is_authenticated %}
+setTimeout(function() {
+    if (!localStorage.getItem('tour_listado_empresas')) {
+        const driver = window.driver.js.driver;
+        const driverObj = driver({
+            showProgress: true,
+            showButtons: ['next', 'previous', 'close'],
+            nextBtnText: 'Siguiente',
+            prevBtnText: 'Anterior',
+            doneBtnText: '¡Entendido!',
+            steps: [
+                { 
+                    popover: { 
+                        title: '🏢 Gestión de Empresas', 
+                        description: '{% if user.is_superuser %}Como administrador, aquí gestionas todas las empresas clientes.{% else %}Aquí puedes ver la información de tu empresa.{% endif %}',
+                        side: 'center'
+                    }
+                },
+                { 
+                    element: '#tblEmpresas', 
+                    popover: { 
+                        title: '📊 Tabla de Empresas', 
+                        description: 'Puedes ver logos, datos de contacto, plan activo, miembros y estado. {% if user.is_superuser %}Usa los botones de exportación para generar reportes.{% endif %}',
+                        side: "top",
+                        align: 'center'
+                    }
+                },
+                {% if user.is_superuser %}
+                { 
+                    element: '.btn-primary', 
+                    popover: { 
+                        title: '➕ Nueva Empresa', 
+                        description: 'Haz clic aquí para registrar nuevas empresas clientes en el sistema.',
+                        side: "bottom"
+                    }
+                },
+                {% endif %}
+                { 
+                    popover: { 
+                        title: '✅ ¡Listo!', 
+                        description: 'Ya conoces la gestión de empresas. {% if user.is_superuser %}Puedes crear, editar y ver los miembros de cada empresa.{% else %}Puedes consultar la información de tu empresa.{% endif %}',
+                        side: 'center'
+                    }
+                }
+            ]
+        });
+        
+        driverObj.drive();
+        localStorage.setItem('tour_listado_empresas', 'true');
+    }
+}, 1500);
+{% endif %}
+</script>
+{% endblock %}

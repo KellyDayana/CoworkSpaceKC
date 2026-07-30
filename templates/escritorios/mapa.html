@@ -1,0 +1,521 @@
+{% extends 'base/plantillaPrincipal.html' %}
+{% load static %}
+
+{% block titulo %}Mapa de Escritorios{% endblock %}
+
+{% block estilos_extra %}
+<style>
+.escritorio-box {
+    width: 100px;
+    height: 120px;
+    border: 3px solid #4A6785;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: move;
+    font-size: 12px;
+    text-align: center;
+    padding: 10px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+    transition: all 0.3s;
+    position: relative;
+}
+
+.escritorio-box:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.25);
+    z-index: 100;
+}
+
+.escritorio-box.ui-draggable-dragging {
+    opacity: 0.7;
+    transform: scale(1.1);
+    z-index: 1000;
+}
+
+.escritorio-disponible {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    border-color: #1e7e34;
+}
+
+.escritorio-ocupado {
+    background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+    color: white;
+    border-color: #c82333;
+}
+
+.escritorio-mantenimiento {
+    background: linear-gradient(135deg, #6c757d 0%, #adb5bd 100%);
+    color: white;
+    border-color: #545b62;
+}
+
+.posicion-slot {
+    width: 120px;
+    height: 140px;
+    border: 3px dashed #4A6785;
+    border-radius: 10px;
+    background: rgba(74, 103, 133, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: all 0.3s;
+}
+
+.posicion-slot.ui-droppable-hover {
+    background: rgba(40, 167, 69, 0.2);
+    border-color: #28a745;
+    border-style: solid;
+}
+
+.posicion-numero-slot {
+    position: absolute;
+    top: 10px;
+    font-size: 24px;
+    font-weight: bold;
+    color: #4A6785;
+    opacity: 0.3;
+}
+
+.posicion-numero {
+    position: absolute;
+    top: 5px;
+    right: 8px;
+    background: rgba(255,255,255,0.9);
+    color: #333;
+    padding: 2px 8px;
+    border-radius: 50%;
+    font-weight: bold;
+    font-size: 11px;
+}
+
+.piso-container {
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    margin-bottom: 40px;
+}
+
+.piso-header {
+    background: linear-gradient(135deg, #4A6785 0%, #2D4A64 100%);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.escritorios-row {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 15px;
+    padding: 30px 20px;
+    background: linear-gradient(45deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 10px;
+    min-height: 180px;
+}
+
+.leyenda {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+}
+
+.leyenda-item {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 25px;
+    margin-bottom: 10px;
+}
+
+.leyenda-color {
+    width: 30px;
+    height: 30px;
+    border-radius: 5px;
+    margin-right: 10px;
+}
+</style>
+{% endblock %}
+
+{% block contenido %}
+<section class="ftco-section bg-light">
+    <div class="container-fluid">
+        <div class="row justify-content-center pb-4 mb-3">
+            <div class="col-md-10 heading-section text-center ftco-animate">
+                <span class="subheading">Gestión de Espacios</span>
+                <h2>Mapa Interactivo de Escritorios</h2>
+                <p class="text-muted">Arrastra los escritorios para reorganizarlos • 10 posiciones por piso</p>
+            </div>
+        </div>
+        
+        <!-- Estadísticas y acciones -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="bg-white p-3 rounded shadow-sm d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>Total:</strong> {{ escritorios.count }} escritorios |
+                        {% with disponibles=escritorios|length ocupados=escritorios|length %}
+                        <span class="text-success"><strong>Disponibles:</strong> 
+                            {{ escritorios|dictsort:"estado"|dictsort:"disponible"|length }}
+                        </span> |
+                        <span class="text-danger"><strong>Ocupados:</strong> 
+                            {{ escritorios|dictsort:"estado"|dictsort:"ocupado"|length }}
+                        </span>
+                        {% endwith %}
+                    </div>
+                    <div>
+                        <a href="{% url 'escritorio_lista' %}" class="btn btn-secondary me-2">
+                            <i class="fa fa-list"></i> Vista Lista
+                        </a>
+                        {% if user.is_superuser %}
+                        <a href="{% url 'nuevo_escritorio' %}" class="btn btn-primary">
+                            <i class="fa fa-plus"></i> Nuevo Escritorio
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Leyenda -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="leyenda text-center">
+                    <h6 class="mb-3"><i class="fa fa-info-circle"></i> Leyenda</h6>
+                    <div class="leyenda-item">
+                        <div class="leyenda-color escritorio-disponible"></div>
+                        <span>Disponible</span>
+                    </div>
+                    <div class="leyenda-item">
+                        <div class="leyenda-color escritorio-ocupado"></div>
+                        <span>Ocupado</span>
+                    </div>
+                    <div class="leyenda-item">
+                        <div class="leyenda-color escritorio-mantenimiento"></div>
+                        <span>Mantenimiento</span>
+                    </div>
+                    <div class="leyenda-item">
+                        <i class="fa fa-arrows-alt text-primary"></i>
+                        <span class="ms-2">Arrastra para reorganizar</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mapas por Piso -->
+        {% regroup escritorios|dictsort:"piso" by piso as escritorios_por_piso %}
+        
+        {% for piso in escritorios_por_piso %}
+        <div class="row">
+            <div class="col-md-12">
+                <div class="piso-container">
+                    <div class="piso-header">
+                        <i class="fa fa-building"></i> Piso {{ piso.grouper }}
+                        <span class="float-end">{{ piso.list|length }} / 10 escritorios</span>
+                    </div>
+                    
+                    <div class="escritorios-row" id="piso-{{ piso.grouper }}" data-piso="{{ piso.grouper }}">
+                        {% for pos in "1234567890"|make_list %}
+                            {% if forloop.counter <= 10 %}
+                                {% with posicion=forloop.counter %}
+                                    <div class="posicion-slot" data-posicion="{{ posicion }}" data-piso="{{ piso.grouper }}">
+                                        <span class="posicion-numero-slot">{{ posicion }}</span>
+                                        {% for escritorio in piso.list %}
+                                            {% if escritorio.posicion == posicion %}
+                                                <div class="escritorio-box escritorio-{{ escritorio.estado }}" 
+                                                     data-id="{{ escritorio.id }}"
+                                                     data-posicion="{{ escritorio.posicion }}"
+                                                     data-piso="{{ escritorio.piso }}"
+                                                     data-codigo="{{ escritorio.codigo }}">
+                                                    <div class="posicion-numero">{{ posicion }}</div>
+                                                    <strong style="font-size: 14px;">{{ escritorio.codigo }}</strong>
+                                                    <small>{{ escritorio.get_tipo_display }}</small>
+                                                    <small style="font-size: 10px; margin-top: 3px;">
+                                                        <i class="fa fa-dollar-sign"></i> ${{ escritorio.precio_mensual }}/mes
+                                                    </small>
+                                                    {% if escritorio.miembro_asignado %}
+                                                        <small class="mt-2" style="font-size: 10px;">
+                                                            <i class="fa fa-user"></i> {{ escritorio.miembro_asignado.nombre|truncatechars:10 }}
+                                                        </small>
+                                                    {% endif %}
+                                                </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                {% endwith %}
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        
+        {% if not escritorios %}
+        <div class="row">
+            <div class="col-md-12">
+                <div class="alert alert-info text-center py-5">
+                    <i class="fa fa-info-circle fa-3x mb-3 text-primary"></i>
+                    <h5>No hay escritorios registrados</h5>
+                    <p>Comienza agregando escritorios al sistema</p>
+                    <a href="{% url 'nuevo_escritorio' %}" class="btn btn-primary btn-lg mt-3">
+                        <i class="fa fa-plus"></i> Crear Primer Escritorio
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    console.log('Mapa interactivo cargado - jQuery UI Draggable');
+    
+    {% if user.is_superuser %}
+    // Solo administradores pueden arrastrar escritorios
+    
+    // Hacer los escritorios arrastrables con jQuery UI
+    $(".escritorio-box").draggable({
+        revert: "invalid",  // Vuelve a su lugar si no se suelta en un slot válido
+        helper: "clone",    // Muestra una copia mientras se arrastra
+        cursor: "move",
+        zIndex: 1000,
+        start: function(event, ui) {
+            $(this).css('opacity', '0.5');
+            console.log('Iniciando arrastre:', $(this).data('codigo'));
+        },
+        stop: function(event, ui) {
+            $(this).css('opacity', '1');
+        }
+    });
+    
+    // Hacer los slots receptores con jQuery UI Droppable
+    $(".posicion-slot").droppable({
+        accept: ".escritorio-box",  // Solo acepta escritorios
+        hoverClass: "ui-droppable-hover",
+        tolerance: "pointer",
+        drop: function(event, ui) {
+            const $escritorio = ui.draggable;
+            const $slotDestino = $(this);
+            
+            const escritorioId = $escritorio.data('id');
+            const escritorioCodigo = $escritorio.data('codigo');
+            const pisoOrigen = $escritorio.data('piso');
+            const posicionOrigen = $escritorio.data('posicion');
+            const pisoDestino = $slotDestino.data('piso');
+            const posicionDestino = $slotDestino.data('posicion');
+            
+            console.log('Drop:', escritorioCodigo, 'de', pisoOrigen + '-' + posicionOrigen, 'a', pisoDestino + '-' + posicionDestino);
+            
+            // Validar que sea el mismo piso
+            if (pisoOrigen !== pisoDestino) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'No puedes mover escritorios entre pisos diferentes',
+                    timer: 2500,
+                    showConfirmButton: false
+                });
+                return;
+            }
+            
+            // Validar que no sea la misma posición
+            if (posicionOrigen === posicionDestino) {
+                console.log('Misma posición, no hacer nada');
+                return;
+            }
+            
+            // Verificar si el slot destino ya tiene un escritorio
+            const $escritorioEnDestino = $slotDestino.find('.escritorio-box');
+            if ($escritorioEnDestino.length > 0 && $escritorioEnDestino.data('id') !== escritorioId) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Posición ocupada',
+                    text: 'Esa posición ya está ocupada por ' + $escritorioEnDestino.data('codigo'),
+                    timer: 2500,
+                    showConfirmButton: false
+                });
+                return;
+            }
+            
+            // Enviar AJAX para actualizar la posición
+            $.ajax({
+                url: "{% url 'actualizar_posicion_escritorio' %}",
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    id: escritorioId,
+                    posicion: posicionDestino
+                }),
+                success: function(response) {
+                    console.log('Respuesta AJAX:', response);
+                    if (response.success) {
+                        // Mostrar animación de éxito
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Movido!',
+                            text: escritorioCodigo + ' ahora está en Posición ' + posicionDestino,
+                            timer: 1500,
+                            showConfirmButton: false,
+                            toast: true,
+                            position: 'top-end'
+                        });
+                        
+                        // Recargar página después de medio segundo
+                        setTimeout(() => {
+                            location.reload();
+                        }, 800);
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: response.error || 'No se pudo mover el escritorio',
+                            timer: 2500
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error AJAX:', status, error);
+                    console.error('Respuesta:', xhr.responseText);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error de conexión',
+                        text: 'No se pudo guardar la nueva posición',
+                        timer: 2500
+                    });
+                }
+            });
+        }
+    });
+    
+    {% endif %}
+    // Fin del bloque de administrador
+    
+    // Click en escritorio para ver detalles (para todos los usuarios)
+    {% if not user.is_superuser %}
+    $(".escritorio-box").on('click', function() {
+        const id = $(this).data('id');
+        const codigo = $(this).data('codigo');
+        
+        Swal.fire({
+            title: 'Escritorio ' + codigo,
+            text: 'Este escritorio está asignado a tu empresa.',
+            icon: 'info',
+            confirmButtonText: 'Cerrar',
+            confirmButtonColor: '#4A6785'
+        });
+    });
+    {% else %}
+    // Click en escritorio para editar (click rápido, no arrastrar) - Solo admin
+    let isDragging = false;
+    
+    $(".escritorio-box").on('mousedown', function() {
+        isDragging = false;
+    });
+    
+    $(".escritorio-box").on('mousemove', function() {
+        isDragging = true;
+    });
+    
+    $(".escritorio-box").on('mouseup', function() {
+        if (!isDragging) {
+            const id = $(this).data('id');
+            const codigo = $(this).data('codigo');
+            
+            Swal.fire({
+                title: 'Escritorio ' + codigo,
+                text: '¿Qué deseas hacer?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: '<i class="fa fa-edit"></i> Editar',
+                cancelButtonText: 'Cerrar',
+                confirmButtonColor: '#4A6785'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = '/escritorios/editar/' + id + '/';
+                }
+            });
+        }
+        isDragging = false;
+    });
+    
+    {% endif %}
+});
+
+// Tour guiado del Mapa de Escritorios
+{% if user.is_authenticated %}
+setTimeout(function() {
+    if (!localStorage.getItem('tour_mapa_escritorios')) {
+        const driver = window.driver.js.driver;
+        const driverObj = driver({
+            showProgress: true,
+            showButtons: ['next', 'previous', 'close'],
+            nextBtnText: 'Siguiente',
+            prevBtnText: 'Anterior',
+            doneBtnText: '¡Entendido!',
+            steps: [
+                { 
+                    popover: { 
+                        title: '🗺️ Mapa Interactivo de Escritorios', 
+                        description: 'Este es el mapa visual de todos los escritorios organizados por piso y posición.',
+                        side: 'center'
+                    }
+                },
+                { 
+                    element: '.leyenda', 
+                    popover: { 
+                        title: '📋 Leyenda de Estados', 
+                        description: 'Los colores indican el estado: Verde = Disponible, Rojo = Ocupado, Gris = Mantenimiento.',
+                        side: "top"
+                    }
+                },
+                { 
+                    element: '.piso-container:first', 
+                    popover: { 
+                        title: '🏢 Escritorios por Piso', 
+                        description: 'Cada piso muestra hasta 10 posiciones horizontales. Los escritorios se organizan por números del 1 al 10.',
+                        side: "top"
+                    }
+                },
+                {% if user.is_superuser %}
+                { 
+                    element: '.escritorio-box:first', 
+                    popover: { 
+                        title: '🖱️ Arrastrar y Soltar (Solo Admin)', 
+                        description: 'Como administrador, puedes arrastrar escritorios para reorganizarlos. Solo se permite mover dentro del mismo piso.',
+                        side: "right"
+                    }
+                },
+                {% endif %}
+                { 
+                    popover: { 
+                        title: '✅ ¡Mapa Listo!', 
+                        description: 'Ya conoces cómo funciona el mapa. {% if user.is_superuser %}Arrastra para reorganizar o haz clic para editar.{% else %}Haz clic en un escritorio para ver detalles.{% endif %}',
+                        side: 'center'
+                    }
+                }
+            ]
+        });
+        
+        driverObj.drive();
+        localStorage.setItem('tour_mapa_escritorios', 'true');
+    }
+}, 1500);
+{% endif %}
+</script>
+{% endblock %}

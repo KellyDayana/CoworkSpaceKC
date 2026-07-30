@@ -1,0 +1,138 @@
+{% extends 'base/plantillaPrincipal.html' %}
+{% load static %}
+
+{% block titulo %}Reporte de Facturación{% endblock %}
+
+{% block contenido %}
+<section class="ftco-section bg-light">
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h3><i class="fa fa-chart-line"></i> Reporte de Facturación</h3>
+                    <a href="{% url 'reportes' %}" class="btn btn-secondary">
+                        <i class="fa fa-arrow-left"></i> Volver
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Métricas Simples -->
+        <div class="row mb-4">
+            <div class="col-md-4 mb-3">
+                <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                    <div class="card-body text-center text-white">
+                        <i class="fa fa-dollar-sign fa-3x mb-3"></i>
+                        <h2>${{ total_facturacion|floatformat:2 }}</h2>
+                        <p class="mb-0">Total Facturado (Pagado)</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #4A6785 0%, #2D4A64 100%);">
+                    <div class="card-body text-center text-white">
+                        <i class="fa fa-building fa-3x mb-3"></i>
+                        <h2>{{ datos_empresas|length }}</h2>
+                        <p class="mb-0">Empresas Activas</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);">
+                    <div class="card-body text-center text-white">
+                        <i class="fa fa-clock fa-3x mb-3"></i>
+                        <h2>
+                            {% widthratio datos_empresas|length 1 1 %}
+                            {% for dato in datos_empresas %}
+                                {% if forloop.first %}{{ dato.horas_salas }}{% endif %}
+                            {% endfor %}
+                        </h2>
+                        <p class="mb-0">Horas Consumidas</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla Simple -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="bg-white p-4 rounded shadow-sm">
+                    <h5 class="mb-3"><i class="fa fa-table"></i> Detalle por Empresa</h5>
+                    <div class="table-responsive">
+                        <table id="tablaFacturacion" class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Empresa</th>
+                                    <th>Plan</th>
+                                    <th>Horas de Salas</th>
+                                    <th>Total Pagado</th>
+                                    <th>Total Pendiente</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for dato in datos_empresas %}
+                                <tr>
+                                    <td>
+                                        {% if dato.empresa.logo %}
+                                        <img src="{{ dato.empresa.logo.url }}" alt="{{ dato.empresa.nombre }}" 
+                                             class="rounded me-2" style="width: 30px; height: 30px; object-fit: cover;">
+                                        {% endif %}
+                                        <strong>{{ dato.empresa.nombre }}</strong>
+                                    </td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if dato.empresa.plan == 'empresarial' %}bg-success
+                                            {% elif dato.empresa.plan == 'profesional' %}bg-primary
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ dato.empresa.get_plan_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ dato.horas_salas }} hrs</td>
+                                    <td><strong class="text-success">${{ dato.total_pagado|floatformat:2 }}</strong></td>
+                                    <td><strong class="text-warning">${{ dato.total_pendiente|floatformat:2 }}</strong></td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">
+                                        No hay datos de facturación disponibles
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    $('#tablaFacturacion').DataTable({
+        language: dtEspanol,
+        dom: 'Bfrtip',
+        buttons: [
+            { 
+                extend: 'excel', 
+                text: '<i class="fa fa-file-excel"></i> EXCEL', 
+                className: 'btn btn-success btn-sm' 
+            },
+            { 
+                extend: 'pdf', 
+                text: '<i class="fa fa-file-pdf"></i> PDF', 
+                className: 'btn btn-sm',
+                attr: {
+                    style: 'background-color: #4A6785; color: white; border-color: #4A6785;'
+                }
+            }
+        ],
+        order: [[3, 'desc']]
+    });
+});
+</script>
+{% endblock %}

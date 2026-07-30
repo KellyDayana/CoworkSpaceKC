@@ -1,0 +1,239 @@
+{% extends 'base/plantillaPrincipal.html' %}
+{% load static %}
+
+{% block titulo %}Inicio - CoworkSpace KC{% endblock %}
+
+{% block contenido %}
+<!-- Hero Section -->
+<div class="hero-wrap js-fullheight" style="background-image: url('{% static 'images/bg_1.jpg' %}');" data-stellar-background-ratio="0.5">
+    <div class="overlay"></div>
+    <div class="container">
+        <div class="row no-gutters slider-text js-fullheight align-items-center justify-content-start">
+            <div class="col-md-7 ftco-animate">
+                <h2 class="subheading">Bienvenido a CoworkSpace KC</h2>
+                <h1 class="mb-4">Tu espacio de trabajo ideal en el corazón de Latacunga</h1>
+                <p>
+                    <a href="{% url 'sala_lista' %}" class="btn btn-primary">Ver Espacios</a> 
+                    {% if not user.is_authenticated %}
+                    <a href="{% url 'registro' %}" class="btn btn-white">Regístrate</a>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estadísticas Rápidas -->
+<section class="ftco-section bg-light">
+    <div class="container">
+        <div class="row justify-content-center pb-5 mb-3">
+            <div class="col-md-7 heading-section text-center ftco-animate">
+                <span class="subheading">CoworkSpace KC</span>
+                <h2>Espacios Diseñados para el Éxito</h2>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-3 ftco-animate">
+                <div class="project-wrap">
+                    <div class="text text-center p-4">
+                        <span class="fa fa-building" style="font-size: 3em; color: #4A6785;"></span>
+                        <h3 class="mt-3">{{ total_empresas }}</h3>
+                        <span>Empresas Activas</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 ftco-animate">
+                <div class="project-wrap">
+                    <div class="text text-center p-4">
+                        <span class="fa fa-users" style="font-size: 3em; color: #4A6785;"></span>
+                        <h3 class="mt-3">{{ total_miembros }}</h3>
+                        <span>Miembros Registrados</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 ftco-animate">
+                <div class="project-wrap">
+                    <div class="text text-center p-4">
+                        <span class="fa fa-calendar" style="font-size: 3em; color: #4A6785;"></span>
+                        <h3 class="mt-3">{{ reservas_hoy }}</h3>
+                        <span>Reservas Hoy</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 ftco-animate">
+                <div class="project-wrap">
+                    <div class="text text-center p-4">
+                        <span class="fa fa-check-circle" style="font-size: 3em; color: #4A6785;"></span>
+                        <h3 class="mt-3">{{ escritorios_ocupados }}/{{ total_escritorios }}</h3>
+                        <span>Escritorios Ocupados</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Servicios Destacados -->
+<section class="ftco-section">
+    <div class="container">
+        <div class="row justify-content-center pb-5 mb-3">
+            <div class="col-md-7 heading-section text-center ftco-animate">
+                <span class="subheading">Nuestros Servicios</span>
+                <h2>¿Qué Ofrecemos?</h2>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4 ftco-animate">
+                <div class="project-wrap">
+                    <a href="{% url 'sala_lista' %}" class="img" style="background-image: url('{% static 'images/services-1.jpg' %}');"></a>
+                    <div class="text p-4">
+                        <span class="days">Desde $25/hora</span>
+                        <h3><a href="{% url 'sala_lista' %}">Salas de Reunión</a></h3>
+                        <p class="location"><span class="fa fa-map-marker"></span> {{ total_salas }} salas disponibles</p>
+                        <p>Espacios equipados con proyector, TV y videoconferencia para tus reuniones profesionales.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 ftco-animate">
+                <div class="project-wrap">
+                    <a href="{% url 'escritorio_lista' %}" class="img" style="background-image: url('{% static 'images/services-2.jpg' %}');"></a>
+                    <div class="text p-4">
+                        <span class="days">Desde $150/mes</span>
+                        <h3><a href="{% url 'escritorio_lista' %}">Escritorios Dedicados</a></h3>
+                        <p class="location"><span class="fa fa-map-marker"></span> Varios pisos</p>
+                        <p>Tu propio espacio de trabajo en un ambiente colaborativo y productivo.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 ftco-animate">
+                <div class="project-wrap">
+                    <a href="{% url 'evento_lista' %}" class="img" style="background-image: url('{% static 'images/services-3.jpg' %}');"></a>
+                    <div class="text p-4">
+                        <span class="days">Gratuito</span>
+                        <h3><a href="{% url 'evento_lista' %}">Eventos y Networking</a></h3>
+                        <p class="location"><span class="fa fa-map-marker"></span> Eventos mensuales</p>
+                        <p>Participa en capacitaciones, conferencias y eventos de networking exclusivos.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% if user.is_authenticated %}
+<!-- Accesos Rápidos para usuarios logueados -->
+<section class="ftco-section bg-light" id="accesos-rapidos">
+    <div class="container">
+        <div class="row justify-content-center pb-5 mb-3">
+            <div class="col-md-7 heading-section text-center ftco-animate">
+                <h2>Accesos Rápidos</h2>
+                <p class="text-muted">Atajos de teclado: <kbd>Alt+N</kbd> Nueva Reserva | <kbd>Alt+C</kbd> Calendario | <kbd>Alt+M</kbd> Mapa</p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4 text-center ftco-animate" id="btn-nueva-reserva">
+                <a href="{% url 'nueva_reserva' %}" class="btn btn-primary btn-lg w-100 mb-3">
+                    <i class="fa fa-plus-circle"></i> Nueva Reserva <kbd>Alt+N</kbd>
+                </a>
+            </div>
+            <div class="col-md-4 text-center ftco-animate" id="btn-calendario">
+                <a href="{% url 'reserva_calendario' %}" class="btn btn-primary btn-lg w-100 mb-3">
+                    <i class="fa fa-calendar"></i> Ver Calendario <kbd>Alt+C</kbd>
+                </a>
+            </div>
+            <div class="col-md-4 text-center ftco-animate" id="btn-mapa">
+                <a href="{% url 'escritorio_mapa' %}" class="btn btn-primary btn-lg w-100 mb-3">
+                    <i class="fa fa-map"></i> Mapa de Escritorios <kbd>Alt+M</kbd>
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Tour guiado para nuevos usuarios -->
+{% if user.is_authenticated %}
+<script>
+// Tour guiado con Driver.js para nuevos miembros
+document.addEventListener('DOMContentLoaded', function() {
+    // Solo mostrar si es la primera vez
+    if (!localStorage.getItem('tour_inicio_completado')) {
+        const driver = window.driver.js.driver;
+        const driverObj = driver({
+            showProgress: true,
+            showButtons: ['next', 'previous', 'close'],
+            nextBtnText: 'Siguiente',
+            prevBtnText: 'Anterior',
+            doneBtnText: '¡Entendido!',
+            steps: [
+                { 
+                    popover: { 
+                        title: '¡Bienvenido a CoworkSpace KC! 🎉', 
+                        description: 'Te daremos un tour rápido por las funciones principales del sistema. Presiona Siguiente para continuar.',
+                        side: 'center'
+                    }
+                },
+                { 
+                    element: '#ftco-navbar', 
+                    popover: { 
+                        title: '📋 Menú de Navegación', 
+                        description: 'Desde aquí puedes acceder a Empresas, Salas, Escritorios, Mapa, Reservas y Eventos.',
+                        side: "bottom",
+                        align: 'center'
+                    }
+                },
+                { 
+                    element: '#accesos-rapidos', 
+                    popover: { 
+                        title: '⚡ Accesos Rápidos', 
+                        description: 'Estos son los accesos más utilizados. Puedes hacer reservas, ver el calendario o explorar el mapa de escritorios.',
+                        side: "top",
+                        align: 'center'
+                    }
+                },
+                { 
+                    element: '#btn-nueva-reserva', 
+                    popover: { 
+                        title: '⌨️ Atajos de Teclado', 
+                        description: 'Puedes usar <strong>Alt+N</strong> para Nueva Reserva, <strong>Alt+C</strong> para Calendario y <strong>Alt+M</strong> para el Mapa.',
+                        side: "top"
+                    }
+                },
+                { 
+                    popover: { 
+                        title: '✅ ¡Listo para empezar!', 
+                        description: 'Ya conoces lo básico. Explora el sistema y disfruta de tu espacio de trabajo. ¡Puedes reiniciar este tour desde el menú de ayuda!',
+                        side: 'center'
+                    }
+                }
+            ]
+        });
+        
+        setTimeout(() => {
+            driverObj.drive();
+            localStorage.setItem('tour_inicio_completado', 'true');
+        }, 1500);
+    }
+});
+
+// ATAJOS DE TECLADO - Usamos Alt+ para no interferir con el navegador
+// Alt+N = Nueva Reserva
+hotkeys('alt+n', function(event, handler) {
+    event.preventDefault();
+    window.location.href = "{% url 'nueva_reserva' %}";
+});
+
+// Alt+C = Calendario
+hotkeys('alt+c', function(event, handler) {
+    event.preventDefault();
+    window.location.href = "{% url 'reserva_calendario' %}";
+});
+
+// Alt+M = Mapa
+hotkeys('alt+m', function(event, handler) {
+    event.preventDefault();
+    window.location.href = "{% url 'escritorio_mapa' %}";
+});
+</script>
+{% endif %}
+{% endblock %}

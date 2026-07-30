@@ -1,0 +1,278 @@
+{% extends 'base/plantillaPrincipal.html' %}
+{% load static %}
+
+{% block titulo %}Editar Reserva{% endblock %}
+
+{% block contenido %}
+<section class="ftco-section bg-light">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="bg-white p-4 rounded shadow-sm">
+                    <h4 class="mb-4"><i class="fa fa-edit"></i> Editar Reserva #{{ reserva.id }}</h4>
+                    
+                    <form action="{% url 'procesar_edicion_reserva' %}" method="POST" 
+                          id="formEditarReserva" novalidate>
+                        {% csrf_token %}
+                        <input type="hidden" name="id" value="{{ reserva.id }}">
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="sala" class="form-label">Sala de Reunión *</label>
+                                <select class="form-select" name="sala" id="sala">
+                                    {% for sala in salas %}
+                                    <option value="{{ sala.id }}" data-precio="{{ sala.precio_hora }}" 
+                                            data-capacidad="{{ sala.capacidad }}"
+                                            {% if reserva.sala.id == sala.id %}selected{% endif %}>
+                                        {{ sala.nombre }} - Piso {{ sala.piso }} (Cap: {{ sala.capacidad }} personas)
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <div id="errorSala" class="text-danger small"></div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="miembro" class="form-label">Miembro *</label>
+                                <select class="form-select" name="miembro" id="miembro">
+                                    {% for miembro in miembros %}
+                                    <option value="{{ miembro.id }}"
+                                            {% if reserva.miembro.id == miembro.id %}selected{% endif %}>
+                                        {{ miembro.nombre }} {{ miembro.apellido }} - {{ miembro.empresa.nombre }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <div id="errorMiembro" class="text-danger small"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="fecha" class="form-label">Fecha *</label>
+                                <input type="date" class="form-control" name="fecha" id="fecha" 
+                                       value="{{ reserva.fecha|date:'Y-m-d' }}">
+                                <div id="errorFecha" class="text-danger small"></div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="hora_inicio" class="form-label">Hora Inicio *</label>
+                                <input type="time" class="form-control" name="hora_inicio" id="hora_inicio" 
+                                       value="{{ reserva.hora_inicio|time:'H:i' }}">
+                                <div id="errorHoraInicio" class="text-danger small"></div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="hora_fin" class="form-label">Hora Fin *</label>
+                                <input type="time" class="form-control" name="hora_fin" id="hora_fin" 
+                                       value="{{ reserva.hora_fin|time:'H:i' }}">
+                                <div id="errorHoraFin" class="text-danger small"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="proposito" class="form-label">Propósito de la Reunión *</label>
+                            <textarea class="form-control" name="proposito" id="proposito" rows="3">{{ reserva.proposito }}</textarea>
+                            <div id="errorProposito" class="text-danger small"></div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="numero_asistentes" class="form-label">Número de Asistentes *</label>
+                                <input type="number" class="form-control" name="numero_asistentes" 
+                                       id="numero_asistentes" value="{{ reserva.numero_asistentes }}" min="1">
+                                <div id="errorAsistentes" class="text-danger small"></div>
+                                <small id="capacidadInfo" class="text-muted"></small>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="estado" class="form-label">Estado *</label>
+                                <select class="form-select" name="estado" id="estado">
+                                    <option value="confirmada" {% if reserva.estado == 'confirmada' %}selected{% endif %}>Confirmada</option>
+                                    <option value="pendiente" {% if reserva.estado == 'pendiente' %}selected{% endif %}>Pendiente</option>
+                                    <option value="completada" {% if reserva.estado == 'completada' %}selected{% endif %}>Completada</option>
+                                    <option value="cancelada" {% if reserva.estado == 'cancelada' %}selected{% endif %}>Cancelada</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Resumen del Costo -->
+                        <div class="alert alert-info">
+                            <h5><i class="fa fa-calculator"></i> Resumen del Costo</h5>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <strong>Precio por hora:</strong><br>
+                                    <span id="precioHora" class="text-success">${{ reserva.sala.precio_hora }}</span>
+                                </div>
+                                <div class="col-md-4">
+                                    <strong>Duración estimada:</strong><br>
+                                    <span id="duracion">0 horas</span>
+                                </div>
+                                <div class="col-md-4">
+                                    <strong>Costo total:</strong><br>
+                                    <h4 id="costoTotal" class="text-success mb-0">${{ reserva.costo_total }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <i class="fa fa-exclamation-triangle"></i>
+                            <strong>Nota:</strong> El costo se recalculará automáticamente si cambias la sala o las horas.
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'reserva_lista' %}" class="btn btn-secondary">
+                                <i class="fa fa-arrow-left"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fa fa-save"></i> Actualizar Reserva
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Calcular costo automáticamente
+function calcularCosto() {
+    const salaSelect = document.getElementById('sala');
+    const horaInicio = document.getElementById('hora_inicio').value;
+    const horaFin = document.getElementById('hora_fin').value;
+    
+    if (salaSelect.value && horaInicio && horaFin) {
+        const precioHora = parseFloat(salaSelect.options[salaSelect.selectedIndex].dataset.precio);
+        
+        // Calcular duración en horas
+        const inicio = new Date('2000-01-01 ' + horaInicio);
+        const fin = new Date('2000-01-01 ' + horaFin);
+        const diffMs = fin - inicio;
+        const diffHours = diffMs / (1000 * 60 * 60);
+        
+        if (diffHours > 0) {
+            const costoTotal = precioHora * diffHours;
+            document.getElementById('precioHora').textContent = '$' + precioHora.toFixed(2);
+            document.getElementById('duracion').textContent = diffHours.toFixed(1) + ' horas';
+            document.getElementById('costoTotal').textContent = '$' + costoTotal.toFixed(2);
+        }
+    }
+}
+
+// Mostrar capacidad de la sala seleccionada
+document.getElementById('sala').addEventListener('change', function() {
+    const capacidad = this.options[this.selectedIndex].dataset.capacidad;
+    if (capacidad) {
+        document.getElementById('capacidadInfo').textContent = 'Capacidad máxima: ' + capacidad + ' personas';
+    }
+    calcularCosto();
+});
+
+document.getElementById('hora_inicio').addEventListener('change', calcularCosto);
+document.getElementById('hora_fin').addEventListener('change', calcularCosto);
+
+// Calcular costo inicial
+window.addEventListener('load', function() {
+    const capacidad = document.getElementById('sala').options[document.getElementById('sala').selectedIndex].dataset.capacidad;
+    document.getElementById('capacidadInfo').textContent = 'Capacidad máxima: ' + capacidad + ' personas';
+    calcularCosto();
+});
+
+// Validaciones
+document.getElementById('formEditarReserva').addEventListener('submit', function(e) {
+    let valido = true;
+    
+    // Sala
+    const sala = document.getElementById('sala').value;
+    const errorSala = document.getElementById('errorSala');
+    if (sala === '') {
+        errorSala.textContent = 'Debe seleccionar una sala.';
+        valido = false;
+    } else {
+        errorSala.textContent = '';
+    }
+    
+    // Miembro
+    const miembro = document.getElementById('miembro').value;
+    const errorMiembro = document.getElementById('errorMiembro');
+    if (miembro === '') {
+        errorMiembro.textContent = 'Debe seleccionar un miembro.';
+        valido = false;
+    } else {
+        errorMiembro.textContent = '';
+    }
+    
+    // Fecha
+    const fecha = document.getElementById('fecha').value;
+    const errorFecha = document.getElementById('errorFecha');
+    if (fecha === '') {
+        errorFecha.textContent = 'La fecha es obligatoria.';
+        valido = false;
+    } else {
+        errorFecha.textContent = '';
+    }
+    
+    // Hora inicio
+    const horaInicio = document.getElementById('hora_inicio').value;
+    const errorHoraInicio = document.getElementById('errorHoraInicio');
+    if (horaInicio === '') {
+        errorHoraInicio.textContent = 'La hora de inicio es obligatoria.';
+        valido = false;
+    } else {
+        errorHoraInicio.textContent = '';
+    }
+    
+    // Hora fin
+    const horaFin = document.getElementById('hora_fin').value;
+    const errorHoraFin = document.getElementById('errorHoraFin');
+    if (horaFin === '') {
+        errorHoraFin.textContent = 'La hora de fin es obligatoria.';
+        valido = false;
+    } else if (horaInicio && horaFin <= horaInicio) {
+        errorHoraFin.textContent = 'La hora de fin debe ser posterior a la hora de inicio.';
+        valido = false;
+    } else {
+        errorHoraFin.textContent = '';
+    }
+    
+    // Propósito
+    const proposito = document.getElementById('proposito').value.trim();
+    const errorProposito = document.getElementById('errorProposito');
+    if (proposito === '') {
+        errorProposito.textContent = 'El propósito es obligatorio.';
+        valido = false;
+    } else if (proposito.length < 10) {
+        errorProposito.textContent = 'El propósito debe tener al menos 10 caracteres.';
+        valido = false;
+    } else {
+        errorProposito.textContent = '';
+    }
+    
+    // Número de asistentes
+    const asistentes = document.getElementById('numero_asistentes').value;
+    const errorAsistentes = document.getElementById('errorAsistentes');
+    const capacidadSala = parseInt(document.getElementById('sala').options[document.getElementById('sala').selectedIndex].dataset.capacidad);
+    
+    if (asistentes === '' || asistentes < 1) {
+        errorAsistentes.textContent = 'El número de asistentes debe ser mayor a 0.';
+        valido = false;
+    } else if (capacidadSala && parseInt(asistentes) > capacidadSala) {
+        errorAsistentes.textContent = 'Excede la capacidad máxima de la sala (' + capacidadSala + ').';
+        valido = false;
+    } else {
+        errorAsistentes.textContent = '';
+    }
+    
+    if (!valido) {
+        e.preventDefault();
+        Swal.fire({
+            icon: 'error',
+            title: 'Errores en el formulario',
+            text: 'Por favor corrija los errores antes de continuar.',
+            timer: 2500
+        });
+    }
+});
+</script>
+{% endblock %}

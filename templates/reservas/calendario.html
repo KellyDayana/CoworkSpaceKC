@@ -1,0 +1,243 @@
+{% extends 'base/plantillaPrincipal.html' %}
+{% load static %}
+
+{% block titulo %}Calendario de Reservas{% endblock %}
+
+{% block estilos_extra %}
+<style>
+#calendar {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+}
+
+.fc-event {
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.fc-event:hover {
+    opacity: 0.8;
+}
+
+.stats-card {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    text-align: center;
+}
+</style>
+{% endblock %}
+
+{% block contenido %}
+<section class="ftco-section bg-light">
+    <div class="container-fluid">
+        <div class="row justify-content-center pb-5 mb-3">
+            <div class="col-md-7 heading-section text-center ftco-animate">
+                <span class="subheading">Gestión de Reservas</span>
+                <h2>Calendario de Reservas</h2>
+                <p class="text-muted">Vista completa de reservas por día y hora</p>
+            </div>
+        </div>
+        
+        <!-- Estadísticas Rápidas -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <i class="fa fa-calendar-check fa-2x text-success mb-2"></i>
+                    <h4 id="totalReservas">0</h4>
+                    <small class="text-muted">Reservas Activas</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <i class="fa fa-door-open fa-2x text-primary mb-2"></i>
+                    <h4>{{ salas.count }}</h4>
+                    <small class="text-muted">Salas Disponibles</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <i class="fa fa-users fa-2x text-info mb-2"></i>
+                    <h4>{{ miembros.count }}</h4>
+                    <small class="text-muted">Miembros Activos</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <i class="fa fa-clock fa-2x text-warning mb-2"></i>
+                    <h4 id="horasReservadas">0</h4>
+                    <small class="text-muted">Horas Reservadas</small>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Acciones -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="bg-white p-3 rounded shadow-sm d-flex justify-content-end align-items-center">
+                    <a href="{% url 'reserva_lista' %}" class="btn btn-secondary me-2">
+                        <i class="fa fa-list"></i> Vista Lista
+                    </a>
+                    <a href="{% url 'nueva_reserva' %}" class="btn btn-primary">
+                        <i class="fa fa-plus"></i> Nueva Reserva
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Calendario -->
+        <div class="row">
+            <div class="col-md-12">
+                <div id="calendar"></div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('calendar');
+    
+    // Inicializar FullCalendar
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'es',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+        },
+        buttonText: {
+            today: 'Hoy',
+            month: 'Mes',
+            week: 'Semana',
+            day: 'Día',
+            list: 'Lista'
+        },
+        slotMinTime: '07:00:00',
+        slotMaxTime: '22:00:00',
+        allDaySlot: false,
+        height: 'auto',
+        
+        // Cargar eventos desde API
+        events: function(info, successCallback, failureCallback) {
+            $.ajax({
+                url: "{% url 'reservas_api' %}",
+                method: 'GET',
+                success: function(data) {
+                    successCallback(data);
+                    
+                    // Actualizar estadísticas
+                    $('#totalReservas').text(data.length);
+                    
+                    // Calcular horas totales
+                    let horasTotales = 0;
+                    data.forEach(function(evento) {
+                        const inicio = new Date(evento.start);
+                        const fin = new Date(evento.end);
+                        const horas = (fin - inicio) / (1000 * 60 * 60);
+                        horasTotales += horas;
+                    });
+                    $('#horasReservadas').text(Math.round(horasTotales));
+                },
+                error: function() {
+                    failureCallback();
+                }
+            });
+        },
+        
+        // Click en evento
+        eventClick: function(info) {
+            Swal.fire({
+                title: info.event.title,
+                html: `
+                    <p><strong>Inicio:</strong> ${info.event.start.toLocaleString('es-EC')}</p>
+                    <p><strong>Fin:</strong> ${info.event.end.toLocaleString('es-EC')}</p>
+                `,
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: '<i class="fa fa-edit"></i> Editar',
+                cancelButtonText: 'Cerrar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = '/reservas/editar/' + info.event.id + '/';
+                }
+            });
+        },
+        
+        // Click en día/hora
+        dateClick: function(info) {
+            Swal.fire({
+                title: 'Nueva Reserva',
+                html: `<p>¿Crear reserva para ${info.dateStr}?</p>`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, crear',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Redirigir al formulario con la fecha prellenada
+                    window.location.href = '/reservas/nuevo/?fecha=' + info.dateStr;
+                }
+            });
+        },
+        
+        // Tooltip al pasar el mouse
+        eventMouseEnter: function(info) {
+            $(info.el).tooltip({
+                title: info.event.title + '\n' + info.event.start.toLocaleString('es-EC'),
+                placement: 'top',
+                trigger: 'hover',
+                container: 'body'
+            });
+        }
+    });
+    
+    calendar.render();
+});
+
+// ATAJOS DE TECLADO - Usamos Alt+ para no interferir con el navegador
+// Alt+N = Nueva Reserva
+hotkeys('alt+n', function(event, handler) {
+    event.preventDefault();
+    window.location.href = "{% url 'nueva_reserva' %}";
+});
+
+// Alt+C = Ir al día de hoy (Today)
+hotkeys('alt+c', function(event, handler) {
+    event.preventDefault();
+    $('.fc-today-button').click();
+});
+</script>
+
+<script>
+// Tour guiado para el calendario
+{% if user.is_authenticated %}
+setTimeout(function() {
+    if (!localStorage.getItem('tour_calendario')) {
+        const driver = window.driver.js.driver;
+        const driverObj = driver({
+            showProgress: true,
+            steps: [
+                { popover: { title: '¡Bienvenido al Calendario!', description: 'Te mostraremos cómo usar el calendario de reservas.' }},
+                { element: '.fc-toolbar-chunk:first-child', popover: { title: 'Navegación', description: 'Usa estos botones para navegar entre fechas. También puedes usar Alt+C para ir a hoy.', side: "bottom" }},
+                { element: '.fc-toolbar-chunk:last-child', popover: { title: 'Vistas', description: 'Cambia entre vista mensual, semanal o diaria según tus necesidades.', side: "bottom" }},
+                { popover: { title: 'Crear Reserva', description: 'Haz clic en cualquier día para crear una nueva reserva o usa Alt+N como atajo.' }},
+                { popover: { title: '¡Listo!', description: 'Ya puedes gestionar tus reservas. ¡Disfruta!' }}
+            ]
+        });
+        
+        driverObj.drive();
+        localStorage.setItem('tour_calendario', 'true');
+    }
+}, 1500);
+{% endif %}
+</script>
+{% endblock %}
