@@ -68,33 +68,50 @@ git push -u origin main
    ALLOWED_HOSTS=*.railway.app,*.up.railway.app
    ```
 
-### PASO 4: Ejecutar migraciones (3 min)
+### PASO 4: Verificar que el deploy funcionó (2 min)
+
+**¡IMPORTANTE!** No necesitas ejecutar comandos manualmente. El archivo `build.sh` ya hace todo automáticamente:
+- ✅ Instala dependencias
+- ✅ Ejecuta migraciones
+- ✅ Crea superusuario (usuario: `admin`, contraseña: `admin123`)
+- ✅ Recopila archivos estáticos
+
+**Solo necesitas**:
+1. Ve a tu proyecto en Railway
+2. Click en "Deployments" (lado izquierdo)
+3. Verifica que el último deploy diga "SUCCESS" ✅
+4. Click en "View Logs" para ver que dice: `Superuser created` o `Superuser already exists`
+
+**Si ves algún error en los logs**:
 ```bash
-# Instalar Railway CLI
+# Instalar Railway CLI (solo si hay problemas)
 npm install -g @railway/cli
 
-# Login y conectar
+# Login
 railway login
+
+# Conectar al proyecto (selecciona "web", NO "Postgres")
 railway link
 
-# Ejecutar migraciones
-railway run python manage.py migrate
-
-# Crear superusuario
-railway run python manage.py createsuperuser
-
-# Recopilar archivos estáticos
-railway run python manage.py collectstatic --noinput
+# Ver logs en tiempo real
+railway logs
 ```
 
-### PASO 5: Verificar (1 min)
+### PASO 5: Probar la aplicación (2 min)
 ```bash
 # Abrir en navegador
 railway open
 
-# O ver la URL en el panel de Railway
-# https://tu-app.up.railway.app
+# O ve manualmente a tu URL en Railway
+# https://web-production-XXXXX.up.railway.app
 ```
+
+**Prueba lo siguiente**:
+1. Abre tu URL de Railway
+2. Deberías ver la página de login
+3. Ve a: `https://tu-url.railway.app/admin/`
+4. Login con: **usuario**: `admin`, **contraseña**: `admin123`
+5. Si no puedes entrar, revisa los logs del deploy en Railway
 
 ---
 
@@ -156,11 +173,18 @@ except ImportError:
 - [ ] Verificar URL funciona: `railway open`
 
 ### MAÑANA (antes de clase):
-- [ ] Ejecutar migraciones: `railway run python manage.py migrate`
-- [ ] Crear superusuario: `railway run python manage.py createsuperuser`
-- [ ] Cargar datos de prueba (empresas, salas, etc.)
+- [ ] Abrir tu URL: `https://web-production-7b8ca.up.railway.app`
+- [ ] Probar login en `/admin/` con: `admin` / `admin123`
+- [ ] Cargar datos de prueba (empresas, salas, escritorios, reservas)
 - [ ] Probar que PostgreSQL funciona (crear dato y recargar)
-- [ ] Tomar captura del panel de Railway
+- [ ] Tomar captura del panel de Railway mostrando PostgreSQL
+
+**Si el superusuario no funciona**:
+1. Ve a Railway → tu proyecto → Deployments
+2. Click en el último deploy
+3. Click "View Logs"
+4. Busca la línea que dice: `Superuser created` o `Superuser already exists`
+5. Si dice "Superuser created", las credenciales son: `admin` / `admin123`
 
 ### EN CLASE (presentación):
 - [ ] Mostrar URL: `https://tu-app.railway.app`
@@ -250,6 +274,33 @@ def lista_estudiantes(request):
 
 ## 🆘 TROUBLESHOOTING
 
+### ❌ Error: "Prohibido (403) - La verificación CSRF ha fallado"
+**CAUSA**: Django en producción requiere configurar `CSRF_TRUSTED_ORIGINS`.
+
+**SOLUCIÓN YA APLICADA**: 
+- ✅ Agregado `CSRF_TRUSTED_ORIGINS` en `settings.py`
+- ✅ Incluye: `https://*.railway.app` y `https://*.up.railway.app`
+- ✅ Cambio ya está en GitHub y Railway lo desplegará automáticamente
+
+**Si sigues viendo el error**:
+1. Ve a Railway → tu proyecto → Deployments
+2. Verifica que el último deploy diga "SUCCESS"
+3. Espera 2-3 minutos después del deploy
+4. Refresca tu navegador (Ctrl + F5 para limpiar caché)
+
+### ❌ Error: UnicodeDecodeError al ejecutar `railway run`
+**CAUSA**: La contraseña de PostgreSQL de Railway tiene caracteres especiales que Windows no procesa.
+
+**SOLUCIÓN**: 
+- ✅ **NO necesitas ejecutar `railway run` desde tu máquina local**
+- ✅ El archivo `build.sh` ya ejecuta TODO automáticamente durante el deploy
+- ✅ Solo verifica los logs en Railway para confirmar que se ejecutó correctamente
+
+**Credenciales del superusuario creado automáticamente**:
+- Usuario: `admin`
+- Email: `admin@coworkspace.com`
+- Contraseña: `admin123`
+
 ### Error: "no module named psycopg2"
 ```bash
 pip install psycopg2-binary
@@ -270,16 +321,21 @@ railway run python manage.py migrate
 
 ### Sin estilos CSS
 ```bash
-railway run python manage.py collectstatic --noinput
+# Esto se ejecuta automáticamente en build.sh
+# Si aún no hay estilos, verifica que build.sh se ejecutó correctamente
+railway logs
 ```
 
-### No puedo crear superusuario
-```bash
-# Asegúrate de estar conectado al proyecto
-railway link
+### No puedo crear superusuario manualmente
+**NO LO NECESITAS**. El superusuario ya se creó automáticamente:
+- Usuario: `admin`
+- Contraseña: `admin123`
 
-# Luego ejecuta
-railway run python manage.py createsuperuser
+**Si olvidaste la contraseña**, puedes cambiarla desde Railway Shell:
+```bash
+railway link
+railway shell
+python manage.py changepassword admin
 ```
 
 ---
