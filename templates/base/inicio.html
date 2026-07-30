@@ -4,6 +4,190 @@
 {% block titulo %}Inicio - CoworkSpace KC{% endblock %}
 
 {% block contenido %}
+<div style="padding: 80px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-align: center;">
+    <div style="max-width: 1200px; margin: 0 auto;">
+        <h1 style="font-size: 3.5rem; margin-bottom: 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">
+            🏢 CoworkSpace KC
+        </h1>
+        <h2 style="font-size: 2rem; margin-bottom: 30px; font-weight: 300;">
+            Sistema de Gestión de Espacios de Coworking
+        </h2>
+        <p style="font-size: 1.3rem; margin-bottom: 40px; max-width: 800px; margin-left: auto; margin-right: auto;">
+            Plataforma web desarrollada en <strong>Django + PostgreSQL</strong> para administrar escritorios dedicados, 
+            salas de reunión, reservas, facturación y eventos en espacios de trabajo colaborativo.
+        </p>
+        
+        <div style="margin: 50px 0;">
+            {% if not user.is_authenticated %}
+            <a href="{% url 'registro' %}" style="display: inline-block; padding: 15px 40px; background: white; color: #667eea; text-decoration: none; border-radius: 30px; font-size: 1.2rem; font-weight: bold; margin: 10px;">
+                Crear Cuenta Gratis
+            </a>
+            <a href="{% url 'login' %}" style="display: inline-block; padding: 15px 40px; background: rgba(255,255,255,0.2); color: white; text-decoration: none; border-radius: 30px; font-size: 1.2rem; font-weight: bold; margin: 10px; border: 2px solid white;">
+                Iniciar Sesión
+            </a>
+            {% else %}
+            <a href="{% url 'nueva_reserva' %}" style="display: inline-block; padding: 15px 40px; background: #4CAF50; color: white; text-decoration: none; border-radius: 30px; font-size: 1.2rem; font-weight: bold; margin: 10px;">
+                ➕ Nueva Reserva
+            </a>
+            <a href="{% url 'reserva_calendario' %}" style="display: inline-block; padding: 15px 40px; background: #2196F3; color: white; text-decoration: none; border-radius: 30px; font-size: 1.2rem; font-weight: bold; margin: 10px;">
+                📅 Ver Calendario
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Características -->
+<div style="padding: 60px 20px; background: white;">
+    <div style="max-width: 1200px; margin: 0 auto;">
+        <h2 style="text-align: center; font-size: 2.5rem; color: #333; margin-bottom: 50px;">
+            ✨ Características Principales
+        </h2>
+        
+        <div style="display: flex; flex-wrap: wrap; gap: 30px; justify-content: center;">
+            <div style="flex: 1; min-width: 280px; max-width: 350px; padding: 30px; background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div style="font-size: 3rem; margin-bottom: 15px;">🏢</div>
+                <h3 style="color: #667eea; margin-bottom: 15px;">Gestión Completa</h3>
+                <p style="color: #666; line-height: 1.6;">Administra empresas, miembros, escritorios dedicados y salas de reunión desde un solo lugar.</p>
+            </div>
+            
+            <div style="flex: 1; min-width: 280px; max-width: 350px; padding: 30px; background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div style="font-size: 3rem; margin-bottom: 15px;">📅</div>
+                <h3 style="color: #667eea; margin-bottom: 15px;">Reservas en Tiempo Real</h3>
+                <p style="color: #666; line-height: 1.6;">Sistema de calendario interactivo con FullCalendar.js para gestionar reservas fácilmente.</p>
+            </div>
+            
+            <div style="flex: 1; min-width: 280px; max-width: 350px; padding: 30px; background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div style="font-size: 3rem; margin-bottom: 15px;">🗺️</div>
+                <h3 style="color: #667eea; margin-bottom: 15px;">Mapa Interactivo</h3>
+                <p style="color: #666; line-height: 1.6;">Visualiza la disponibilidad de escritorios por piso en un mapa interactivo y fácil de usar.</p>
+            </div>
+            
+            <div style="flex: 1; min-width: 280px; max-width: 350px; padding: 30px; background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div style="font-size: 3rem; margin-bottom: 15px;">💰</div>
+                <h3 style="color: #667eea; margin-bottom: 15px;">Facturación Automática</h3>
+                <p style="color: #666; line-height: 1.6;">Genera facturas en PDF automáticamente con todos los detalles de la reserva.</p>
+            </div>
+            
+            <div style="flex: 1; min-width: 280px; max-width: 350px; padding: 30px; background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div style="font-size: 3rem; margin-bottom: 15px;">⌨️</div>
+                <h3 style="color: #667eea; margin-bottom: 15px;">Atajos de Teclado</h3>
+                <p style="color: #666; line-height: 1.6;">Navega rápidamente con Alt+N (Nueva Reserva), Alt+C (Calendario) y Alt+M (Mapa).</p>
+            </div>
+            
+            <div style="flex: 1; min-width: 280px; max-width: 350px; padding: 30px; background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div style="font-size: 3rem; margin-bottom: 15px;">🎯</div>
+                <h3 style="color: #667eea; margin-bottom: 15px;">Tours Guiados</h3>
+                <p style="color: #666; line-height: 1.6;">Onboarding interactivo con Driver.js para que nuevos usuarios aprendan el sistema rápidamente.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tecnologías -->
+<div style="padding: 60px 20px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+    <div style="max-width: 1200px; margin: 0 auto; text-align: center;">
+        <h2 style="font-size: 2.5rem; margin-bottom: 30px;">🚀 Tecnologías Utilizadas</h2>
+        <div style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; margin-top: 40px;">
+            <div style="background: rgba(255,255,255,0.2); padding: 20px 30px; border-radius: 15px; backdrop-filter: blur(10px);">
+                <strong style="font-size: 1.2rem;">Django 6.0.7</strong>
+            </div>
+            <div style="background: rgba(255,255,255,0.2); padding: 20px 30px; border-radius: 15px; backdrop-filter: blur(10px);">
+                <strong style="font-size: 1.2rem;">PostgreSQL</strong>
+            </div>
+            <div style="background: rgba(255,255,255,0.2); padding: 20px 30px; border-radius: 15px; backdrop-filter: blur(10px);">
+                <strong style="font-size: 1.2rem;">Bootstrap 5</strong>
+            </div>
+            <div style="background: rgba(255,255,255,0.2); padding: 20px 30px; border-radius: 15px; backdrop-filter: blur(10px);">
+                <strong style="font-size: 1.2rem;">FullCalendar.js</strong>
+            </div>
+            <div style="background: rgba(255,255,255,0.2); padding: 20px 30px; border-radius: 15px; backdrop-filter: blur(10px);">
+                <strong style="font-size: 1.2rem;">Driver.js</strong>
+            </div>
+            <div style="background: rgba(255,255,255,0.2); padding: 20px 30px; border-radius: 15px; backdrop-filter: blur(10px);">
+                <strong style="font-size: 1.2rem;">Desplegado en Render</strong>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Módulos -->
+<div style="padding: 60px 20px; background: white;">
+    <div style="max-width: 1200px; margin: 0 auto; text-align: center;">
+        <h2 style="font-size: 2.5rem; color: #333; margin-bottom: 30px;">📦 Módulos del Sistema</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 40px;">
+            <div style="padding: 20px; background: #e8f5e9; border-radius: 10px;">
+                <strong style="font-size: 1.1rem; color: #2e7d32;">🏢 Empresas</strong>
+            </div>
+            <div style="padding: 20px; background: #e3f2fd; border-radius: 10px;">
+                <strong style="font-size: 1.1rem; color: #1565c0;">👥 Miembros</strong>
+            </div>
+            <div style="padding: 20px; background: #fff3e0; border-radius: 10px;">
+                <strong style="font-size: 1.1rem; color: #e65100;">🪑 Escritorios</strong>
+            </div>
+            <div style="padding: 20px; background: #fce4ec; border-radius: 10px;">
+                <strong style="font-size: 1.1rem; color: #c2185b;">🚪 Salas</strong>
+            </div>
+            <div style="padding: 20px; background: #f3e5f5; border-radius: 10px;">
+                <strong style="font-size: 1.1rem; color: #7b1fa2;">📅 Reservas</strong>
+            </div>
+            <div style="padding: 20px; background: #e0f2f1; border-radius: 10px;">
+                <strong style="font-size: 1.1rem; color: #00695c;">🎉 Eventos</strong>
+            </div>
+            <div style="padding: 20px; background: #fff9c4; border-radius: 10px;">
+                <strong style="font-size: 1.1rem; color: #f57f17;">💰 Facturación</strong>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estadísticas (si hay datos) -->
+{% if total_empresas > 0 or total_miembros > 0 %}
+<div style="padding: 60px 20px; background: #f8f9fa;">
+    <div style="max-width: 1200px; margin: 0 auto; text-align: center;">
+        <h2 style="font-size: 2.5rem; color: #333; margin-bottom: 50px;">📊 Estadísticas en Tiempo Real</h2>
+        <div style="display: flex; flex-wrap: wrap; gap: 30px; justify-content: center;">
+            <div style="padding: 30px; background: white; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); min-width: 200px;">
+                <div style="font-size: 3rem; color: #667eea;">{{ total_empresas }}</div>
+                <div style="color: #666; margin-top: 10px;">Empresas Activas</div>
+            </div>
+            <div style="padding: 30px; background: white; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); min-width: 200px;">
+                <div style="font-size: 3rem; color: #667eea;">{{ total_miembros }}</div>
+                <div style="color: #666; margin-top: 10px;">Miembros Registrados</div>
+            </div>
+            <div style="padding: 30px; background: white; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); min-width: 200px;">
+                <div style="font-size: 3rem; color: #667eea;">{{ total_salas }}</div>
+                <div style="color: #666; margin-top: 10px;">Salas Disponibles</div>
+            </div>
+            <div style="padding: 30px; background: white; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); min-width: 200px;">
+                <div style="font-size: 3rem; color: #667eea;">{{ total_escritorios }}</div>
+                <div style="color: #666; margin-top: 10px;">Escritorios Totales</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if user.is_authenticated %}
+<script>
+// ATAJOS DE TECLADO
+document.addEventListener('keydown', function(e) {
+    if (e.altKey && e.key === 'n') {
+        e.preventDefault();
+        window.location.href = "{% url 'nueva_reserva' %}";
+    }
+    if (e.altKey && e.key === 'c') {
+        e.preventDefault();
+        window.location.href = "{% url 'reserva_calendario' %}";
+    }
+    if (e.altKey && e.key === 'm') {
+        e.preventDefault();
+        window.location.href = "{% url 'escritorio_mapa' %}";
+    }
+});
+</script>
+{% endif %}
+{% endblock %}
 <!-- Hero Section -->
 <div class="hero-wrap" style="background: linear-gradient(135deg, #2D4A64 0%, #0D1B2A 100%); min-height: 500px; padding: 100px 0;">
     <div class="container">
