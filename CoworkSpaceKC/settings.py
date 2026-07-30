@@ -28,6 +28,20 @@ DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
+# CSRF Configuration para Railway
+CSRF_TRUSTED_ORIGINS = [
+    'https://web-production-7b8ca.up.railway.app',
+    'https://*.railway.app',
+    'https://*.up.railway.app',
+]
+
+# Solo en desarrollo permitir localhost
+if DEBUG:
+    CSRF_TRUSTED_ORIGINS += [
+        'http://localhost:8000',
+        'http://127.0.0.1:8000',
+    ]
+
 
 # Application definition
 
