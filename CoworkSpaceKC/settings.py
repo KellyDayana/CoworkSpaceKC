@@ -28,12 +28,16 @@ DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
-# CSRF Configuration para Railway
-CSRF_TRUSTED_ORIGINS = [
-    'https://web-production-7b8ca.up.railway.app',
-    'https://*.railway.app',
-    'https://*.up.railway.app',
-]
+# CSRF Configuration para Render
+CSRF_TRUSTED_ORIGINS = []
+
+# Agregar dominios según el entorno
+if not DEBUG:
+    # En producción, obtener de variable de entorno o usar patrón de Render
+    render_external_hostname = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+    if render_external_hostname:
+        CSRF_TRUSTED_ORIGINS.append(f'https://{render_external_hostname}')
+    CSRF_TRUSTED_ORIGINS.append('https://*.onrender.com')
 
 # Solo en desarrollo permitir localhost
 if DEBUG:
