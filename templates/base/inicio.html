@@ -9,19 +9,106 @@
     <div class="overlay"></div>
     <div class="container">
         <div class="row no-gutters slider-text js-fullheight align-items-center justify-content-start">
-            <div class="col-md-7 ftco-animate">
-                <h2 class="subheading">Bienvenido a CoworkSpace KC</h2>
-                <h1 class="mb-4">Tu espacio de trabajo ideal en el corazón de Latacunga</h1>
+            <div class="col-md-9 ftco-animate">
+                <h2 class="subheading">🏢 Bienvenido a CoworkSpace KC</h2>
+                <h1 class="mb-4">Sistema de Gestión de Espacios de Coworking</h1>
+                <p class="lead mb-4">
+                    Plataforma integral para administrar escritorios dedicados, salas de reunión, reservas y eventos
+                    en espacios de trabajo colaborativo.
+                </p>
+                <div class="mb-4">
+                    <h5 class="text-white">✨ Características Principales:</h5>
+                    <ul class="list-unstyled text-white">
+                        <li>📊 <strong>Gestión de Empresas y Miembros</strong> - Control completo de clientes</li>
+                        <li>🗓️ <strong>Reservas en Tiempo Real</strong> - Sistema de calendario integrado</li>
+                        <li>🗺️ <strong>Mapa Interactivo</strong> - Visualización de escritorios por piso</li>
+                        <li>📱 <strong>Atajos de Teclado</strong> - Navegación rápida (Alt+N, Alt+C, Alt+M)</li>
+                        <li>💼 <strong>Facturación Automática</strong> - Generación de facturas PDF</li>
+                        <li>🎯 <strong>Tours Guiados</strong> - Onboarding interactivo para nuevos usuarios</li>
+                    </ul>
+                </div>
                 <p>
-                    <a href="{% url 'sala_lista' %}" class="btn btn-primary">Ver Espacios</a> 
+                    <a href="{% url 'sala_lista' %}" class="btn btn-primary btn-lg">Explorar Espacios</a> 
                     {% if not user.is_authenticated %}
-                    <a href="{% url 'registro' %}" class="btn btn-white">Regístrate</a>
+                    <a href="{% url 'registro' %}" class="btn btn-white btn-lg">Crear Cuenta</a>
+                    {% else %}
+                    <a href="{% url 'nueva_reserva' %}" class="btn btn-white btn-lg">Nueva Reserva</a>
                     {% endif %}
                 </p>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Información del Proyecto -->
+<section class="ftco-section bg-light">
+    <div class="container">
+        <div class="row justify-content-center pb-3 mb-3">
+            <div class="col-md-10 heading-section text-center ftco-animate">
+                <span class="subheading">Sobre el Proyecto</span>
+                <h2>Sistema Completo de Coworking</h2>
+                <p class="lead">
+                    CoworkSpace KC es una solución web desarrollada en <strong>Django + PostgreSQL</strong> 
+                    que permite gestionar todos los aspectos de un espacio de coworking moderno.
+                </p>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-4 ftco-animate">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <span class="fa fa-cogs" style="font-size: 3em; color: #4A6785;"></span>
+                        <h4 class="mt-3">Tecnologías</h4>
+                        <ul class="list-unstyled text-left">
+                            <li>✅ Django 6.0.7</li>
+                            <li>✅ PostgreSQL</li>
+                            <li>✅ Bootstrap 5</li>
+                            <li>✅ FullCalendar.js</li>
+                            <li>✅ Driver.js (Tours)</li>
+                            <li>✅ Desplegado en Render</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 ftco-animate">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <span class="fa fa-database" style="font-size: 3em; color: #4A6785;"></span>
+                        <h4 class="mt-3">Módulos</h4>
+                        <ul class="list-unstyled text-left">
+                            <li>🏢 Gestión de Empresas</li>
+                            <li>👥 Administración de Miembros</li>
+                            <li>🪑 Escritorios Dedicados</li>
+                            <li>🚪 Salas de Reunión</li>
+                            <li>📅 Sistema de Reservas</li>
+                            <li>🎉 Gestión de Eventos</li>
+                            <li>💰 Facturación</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 ftco-animate">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <span class="fa fa-users" style="font-size: 3em; color: #4A6785;"></span>
+                        <h4 class="mt-3">Usuarios</h4>
+                        <ul class="list-unstyled text-left">
+                            <li>👔 Administradores</li>
+                            <li>🏢 Empresas</li>
+                            <li>💼 Miembros Individuales</li>
+                            <li>🔐 Autenticación segura</li>
+                            <li>🎫 Sistema de permisos</li>
+                            <li>📊 Dashboard personalizado</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
 <!-- Estadísticas Rápidas -->
 <section class="ftco-section bg-light">
