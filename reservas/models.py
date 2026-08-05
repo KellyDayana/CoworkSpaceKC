@@ -6,9 +6,9 @@ from django.contrib.auth.models import User
 class EmpresaCliente(models.Model):
     id = models.AutoField(primary_key=True)
     nombre = models.CharField(max_length=200)
-    ruc = models.CharField(max_length=13)
+    ruc = models.CharField(max_length=13, unique=True)  # RUC único
     telefono = models.CharField(max_length=15)
-    email = models.EmailField()
+    email = models.EmailField(unique=True)  # Email único
     direccion = models.TextField()
     logo = models.FileField(upload_to='logos_empresas/', null=True, blank=True)
     fecha_registro = models.DateField(auto_now_add=True)
@@ -28,11 +28,11 @@ class EmpresaCliente(models.Model):
 class Miembro(models.Model):
     id = models.AutoField(primary_key=True)
     usuario = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
-    empresa = models.ForeignKey(EmpresaCliente, on_delete=models.CASCADE, related_name='miembros')
-    cedula = models.CharField(max_length=10)
+    empresa = models.ForeignKey(EmpresaCliente, on_delete=models.PROTECT, related_name='miembros')
+    cedula = models.CharField(max_length=10, unique=True)  # UNIQUE: No permite cédulas duplicadas
     nombre = models.CharField(max_length=100)
     apellido = models.CharField(max_length=100)
-    email = models.EmailField()
+    email = models.EmailField(unique=True)  # Email único
     telefono = models.CharField(max_length=15)
     foto = models.FileField(upload_to='fotos_miembros/', null=True, blank=True)
     
@@ -103,8 +103,8 @@ class EscritorioDedicado(models.Model):
 
 class ReservaSala(models.Model):
     id = models.AutoField(primary_key=True)
-    sala = models.ForeignKey(SalaReunion, on_delete=models.CASCADE, related_name='reservas')
-    miembro = models.ForeignKey(Miembro, on_delete=models.CASCADE, related_name='reservas_salas')
+    sala = models.ForeignKey(SalaReunion, on_delete=models.PROTECT, related_name='reservas')  # PROTECT: No permitir eliminar sala con reservas
+    miembro = models.ForeignKey(Miembro, on_delete=models.PROTECT, related_name='reservas_salas')  # PROTECT: No permitir eliminar miembro con reservas
     fecha = models.DateField()
     hora_inicio = models.TimeField()
     hora_fin = models.TimeField()
@@ -129,11 +129,11 @@ class Evento(models.Model):
     id = models.AutoField(primary_key=True)
     titulo = models.CharField(max_length=200)
     descripcion = models.TextField()
-    organizador = models.ForeignKey(EmpresaCliente, on_delete=models.CASCADE, related_name='eventos')
+    organizador = models.ForeignKey(EmpresaCliente, on_delete=models.PROTECT, related_name='eventos')  # PROTECT: No eliminar empresa con eventos
     fecha_evento = models.DateField()
     hora_inicio = models.TimeField()
     hora_fin = models.TimeField()
-    sala = models.ForeignKey(SalaReunion, on_delete=models.CASCADE, related_name='eventos', null=True, blank=True)
+    sala = models.ForeignKey(SalaReunion, on_delete=models.SET_NULL, related_name='eventos', null=True, blank=True)  # SET_NULL: Si se elimina sala, evento sin sala
     capacidad_maxima = models.PositiveIntegerField()
     foto = models.FileField(upload_to='eventos/', null=True, blank=True)
     
@@ -152,7 +152,7 @@ class Evento(models.Model):
 
 class Factura(models.Model):
     id = models.AutoField(primary_key=True)
-    empresa = models.ForeignKey(EmpresaCliente, on_delete=models.CASCADE, related_name='facturas')
+    empresa = models.ForeignKey(EmpresaCliente, on_delete=models.PROTECT, related_name='facturas')  # PROTECT: No eliminar empresa con facturas
     numero_factura = models.CharField(max_length=20, unique=True)
     fecha_emision = models.DateField(auto_now_add=True)
     fecha_vencimiento = models.DateField()
