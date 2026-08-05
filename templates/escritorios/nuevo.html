@@ -195,5 +195,32 @@ document.getElementById('formNuevoEscritorio').addEventListener('submit', functi
         document.getElementById('error' + id.charAt(0).toUpperCase() + id.slice(1).replace('_', '')).textContent = '';
     });
 });
+
+// Control del campo "Miembro Asignado" según el estado
+const estadoSelect = document.getElementById('estado');
+const miembroSelect = document.getElementById('miembro_asignado');
+
+function actualizarCampoMiembro() {
+    const estadoActual = estadoSelect.value;
+    
+    if (estadoActual === 'ocupado') {
+        // Si el estado es "Ocupado", habilitar el campo de miembro
+        miembroSelect.disabled = false;
+        miembroSelect.parentElement.querySelector('small').textContent = 'Requerido cuando el estado es "Ocupado"';
+    } else {
+        // Si el estado es "Disponible" o "Mantenimiento", deshabilitar y limpiar
+        miembroSelect.disabled = true;
+        miembroSelect.value = '';
+        miembroSelect.parentElement.querySelector('small').textContent = 'Solo disponible cuando el estado es "Ocupado"';
+    }
+}
+
+// Ejecutar al cargar la página
+actualizarCampoMiembro();
+
+// Ejecutar cada vez que cambie el estado
+estadoSelect.addEventListener('change', actualizarCampoMiembro);
+    });
+});
 </script>
 {% endblock %}
