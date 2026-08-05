@@ -1155,6 +1155,8 @@ def calcular_subtotal_automatico(request, empresa_id):
         'escritorios_promedio': Decimal('0.00'),
         'reservas_count': 0,
         'reservas_total': Decimal('0.00'),
+        'eventos_count': 0,
+        'eventos_total': Decimal('0.00'),
     }
     
     # 1. Calcular escritorios ocupados por miembros de esta empresa
@@ -1183,6 +1185,26 @@ def calcular_subtotal_automatico(request, empresa_id):
         desglose['reservas_total'] = sum([r.costo_total for r in reservas_mes])
         subtotal += desglose['reservas_total']
     
+    # 3. Calcular eventos organizados por la empresa del mes actual (si usan sala, cobrar por horas)
+    eventos_mes = Evento.objects.filter(
+        organizador=empresa,
+        fecha_evento__month=mes_actual,
+        fecha_evento__year=año_actual
+    )
+    
+    if eventos_mes.exists():
+        desglose['eventos_count'] = eventos_mes.count()
+        # Calcular costo de eventos que usan salas
+        for evento in eventos_mes:
+            if evento.sala:
+                # Calcular horas del evento
+                hora_inicio = datetime.combine(date.today(), evento.hora_inicio)
+                hora_fin = datetime.combine(date.today(), evento.hora_fin)
+                horas = (hora_fin - hora_inicio).seconds / 3600
+                costo_evento = Decimal(horas) * evento.sala.precio_hora
+                desglose['eventos_total'] += costo_evento
+        subtotal += desglose['eventos_total']
+    
     # Verificar si hay servicios
     if subtotal > 0:
         return JsonResponse({
@@ -1194,6 +1216,8 @@ def calcular_subtotal_automatico(request, empresa_id):
                 'escritorios_promedio': float(desglose['escritorios_promedio']),
                 'reservas_count': desglose['reservas_count'],
                 'reservas_total': float(desglose['reservas_total']),
+                'eventos_count': desglose['eventos_count'],
+                'eventos_total': float(desglose['eventos_total']),
             }
         })
     else:
