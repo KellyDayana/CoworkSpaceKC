@@ -340,17 +340,62 @@ $(document).ready(function() {
             // Verificar si el slot destino ya tiene un escritorio
             const $escritorioEnDestino = $slotDestino.find('.escritorio-box');
             if ($escritorioEnDestino.length > 0 && $escritorioEnDestino.data('id') !== escritorioId) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Posición ocupada',
-                    text: 'Esa posición ya está ocupada por ' + $escritorioEnDestino.data('codigo'),
-                    timer: 2500,
-                    showConfirmButton: false
+                // Si hay un escritorio en el destino, hacer INTERCAMBIO automático
+                const escritorioDestinoId = $escritorioEnDestino.data('id');
+                const escritorioDestinoCodigo = $escritorioEnDestino.data('codigo');
+                
+                console.log('Intercambiando:', escritorioCodigo, 'con', escritorioDestinoCodigo);
+                
+                // Enviar AJAX para intercambiar las posiciones
+                $.ajax({
+                    url: "{% url 'intercambiar_escritorios' %}",
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        escritorio1_id: escritorioId,
+                        escritorio2_id: escritorioDestinoId,
+                        posicion1: posicionOrigen,
+                        posicion2: posicionDestino
+                    }),
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: '¡Intercambiados!',
+                                text: escritorioCodigo + ' ↔ ' + escritorioDestinoCodigo,
+                                timer: 1500,
+                                showConfirmButton: false,
+                                toast: true,
+                                position: 'top-end'
+                            });
+                            setTimeout(() => {
+                                location.reload();
+                            }, 500);
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: response.message || 'No se pudo intercambiar las posiciones',
+                                timer: 2500
+                            });
+                        }
+                    },
+                    error: function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Error al intercambiar las posiciones',
+                            timer: 2500
+                        });
+                    }
                 });
                 return;
             }
             
-            // Enviar AJAX para actualizar la posición
+            // Si el slot está vacío, mover normalmente
             $.ajax({
                 url: "{% url 'actualizar_posicion_escritorio' %}",
                 method: 'POST',

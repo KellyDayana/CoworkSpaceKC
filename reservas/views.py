@@ -641,6 +641,37 @@ def actualizar_posicion_escritorio(request):
     return JsonResponse({'success': False})
 
 
+@login_required
+def intercambiar_escritorios(request):
+    # Solo administradores pueden intercambiar escritorios
+    if not request.user.is_superuser:
+        return JsonResponse({'success': False, 'error': 'No tienes permisos para intercambiar escritorios'})
+    
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        escritorio1_id = data.get('escritorio1_id')
+        escritorio2_id = data.get('escritorio2_id')
+        posicion1 = data.get('posicion1')
+        posicion2 = data.get('posicion2')
+        
+        escritorio1 = get_object_or_404(EscritorioDedicado, id=escritorio1_id)
+        escritorio2 = get_object_or_404(EscritorioDedicado, id=escritorio2_id)
+        
+        # Validar que ambos estén en el mismo piso
+        if escritorio1.piso != escritorio2.piso:
+            return JsonResponse({'success': False, 'message': 'Los escritorios deben estar en el mismo piso'})
+        
+        # Intercambiar las posiciones
+        escritorio1.posicion = posicion2
+        escritorio2.posicion = posicion1
+        
+        escritorio1.save()
+        escritorio2.save()
+        
+        return JsonResponse({'success': True})
+    return JsonResponse({'success': False})
+
+
 # ==================== CRUD RESERVAS DE SALAS ====================
 
 @login_required
