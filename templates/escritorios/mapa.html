@@ -5,148 +5,272 @@
 
 {% block estilos_extra %}
 <style>
-.escritorio-box {
-    width: 100px;
-    height: 120px;
-    border: 3px solid #4A6785;
-    border-radius: 10px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    cursor: move;
-    font-size: 12px;
-    text-align: center;
-    padding: 10px;
-    box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+.escritorio-card {
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
     transition: all 0.3s;
-    position: relative;
 }
 
-.escritorio-box:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 6px 15px rgba(0,0,0,0.25);
-    z-index: 100;
-}
-
-.escritorio-box.ui-draggable-dragging {
-    opacity: 0.7;
-    transform: scale(1.1);
-    z-index: 1000;
+.escritorio-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: translateY(-2px);
 }
 
 .escritorio-disponible {
-    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-    color: white;
-    border-color: #1e7e34;
+    background: #d4edda;
+    border-color: #28a745;
 }
 
 .escritorio-ocupado {
-    background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
-    color: white;
-    border-color: #c82333;
+    background: #f8d7da;
+    border-color: #dc3545;
 }
 
 .escritorio-mantenimiento {
-    background: linear-gradient(135deg, #6c757d 0%, #adb5bd 100%);
-    color: white;
-    border-color: #545b62;
+    background: #e2e3e5;
+    border-color: #6c757d;
 }
 
-.posicion-slot {
-    width: 120px;
-    height: 140px;
-    border: 3px dashed #4A6785;
-    border-radius: 10px;
-    background: rgba(74, 103, 133, 0.05);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    transition: all 0.3s;
-}
-
-.posicion-slot.ui-droppable-hover {
-    background: rgba(40, 167, 69, 0.2);
-    border-color: #28a745;
-    border-style: solid;
-}
-
-.posicion-numero-slot {
-    position: absolute;
-    top: 10px;
+.posicion-badge {
     font-size: 24px;
     font-weight: bold;
     color: #4A6785;
-    opacity: 0.3;
+    min-width: 50px;
+    display: inline-block;
 }
 
-.posicion-numero {
-    position: absolute;
-    top: 5px;
-    right: 8px;
-    background: rgba(255,255,255,0.9);
-    color: #333;
-    padding: 2px 8px;
-    border-radius: 50%;
-    font-weight: bold;
-    font-size: 11px;
-}
-
-.piso-container {
-    background: white;
-    padding: 30px;
-    border-radius: 15px;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-    margin-bottom: 40px;
-}
-
-.piso-header {
-    background: linear-gradient(135deg, #4A6785 0%, #2D4A64 100%);
-    color: white;
-    padding: 15px 25px;
-    border-radius: 10px;
-    margin-bottom: 30px;
-    font-weight: bold;
-    font-size: 18px;
-}
-
-.escritorios-row {
-    display: flex;
-    justify-content: space-around;
-    flex-wrap: wrap;
-    gap: 15px;
-    padding: 30px 20px;
-    background: linear-gradient(45deg, #f8f9fa 0%, #e9ecef 100%);
-    border-radius: 10px;
-    min-height: 180px;
-}
-
-.leyenda {
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 3px 15px rgba(0,0,0,0.1);
-    margin-bottom: 30px;
-}
-
-.leyenda-item {
-    display: inline-flex;
-    align-items: center;
-    margin-right: 25px;
-    margin-bottom: 10px;
-}
-
-.leyenda-color {
-    width: 30px;
-    height: 30px;
-    border-radius: 5px;
-    margin-right: 10px;
+.btn-intercambio {
+    min-width: 120px;
 }
 </style>
 {% endblock %}
 
 {% block contenido %}
+<section class="ftco-section bg-light">
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h3><i class="fa fa-map"></i> Mapa de Escritorios por Posición</h3>
+                    <div>
+                        <a href="{% url 'escritorio_lista' %}" class="btn btn-secondary me-2">
+                            <i class="fa fa-list"></i> Vista Lista
+                        </a>
+                        {% if user.is_superuser %}
+                        <a href="{% url 'nuevo_escritorio' %}" class="btn btn-primary">
+                            <i class="fa fa-plus"></i> Nuevo
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Selector de Piso -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="bg-white p-3 rounded shadow-sm">
+                    <strong>Seleccionar Piso:</strong>
+                    {% for piso in pisos %}
+                        <a href="?piso={{ piso }}" class="btn btn-sm {% if piso == piso_seleccionado %}btn-primary{% else %}btn-outline-primary{% endif %} ms-2">
+                            Piso {{ piso }}
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Escritorios del Piso Seleccionado -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="bg-white p-4 rounded shadow-sm">
+                    <h5 class="mb-4">
+                        <i class="fa fa-building"></i> Piso {{ piso_seleccionado }} 
+                        <span class="badge bg-primary">{{ escritorios.count }} escritorios</span>
+                    </h5>
+
+                    {% if user.is_superuser %}
+                    <div class="alert alert-info">
+                        <i class="fa fa-info-circle"></i> 
+                        <strong>Administrador:</strong> Usa los botones "Intercambiar" para cambiar posiciones entre dos escritorios.
+                    </div>
+                    {% endif %}
+
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Posición</th>
+                                    <th>Código</th>
+                                    <th>Tipo</th>
+                                    <th>Estado</th>
+                                    <th>Miembro Asignado</th>
+                                    <th>Precio</th>
+                                    {% if user.is_superuser %}
+                                    <th>Acciones</th>
+                                    {% endif %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for escritorio in escritorios %}
+                                <tr class="escritorio-card escritorio-{{ escritorio.estado }}">
+                                    <td>
+                                        <span class="posicion-badge">#{{ escritorio.posicion }}</span>
+                                    </td>
+                                    <td><strong>{{ escritorio.codigo }}</strong></td>
+                                    <td>{{ escritorio.get_tipo_display }}</td>
+                                    <td>
+                                        {% if escritorio.estado == 'disponible' %}
+                                            <span class="badge bg-success">Disponible</span>
+                                        {% elif escritorio.estado == 'ocupado' %}
+                                            <span class="badge bg-danger">Ocupado</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Mantenimiento</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if escritorio.miembro_asignado %}
+                                            <i class="fa fa-user"></i> {{ escritorio.miembro_asignado.nombre }} {{ escritorio.miembro_asignado.apellido }}
+                                            <br><small class="text-muted">{{ escritorio.miembro_asignado.empresa.nombre }}</small>
+                                        {% else %}
+                                            <span class="text-muted">Sin asignar</span>
+                                        {% endif %}
+                                    </td>
+                                    <td><strong>${{ escritorio.precio_mensual }}</strong>/mes</td>
+                                    {% if user.is_superuser %}
+                                    <td>
+                                        <button class="btn btn-sm btn-warning btn-intercambio" 
+                                                onclick="seleccionarParaIntercambio({{ escritorio.id }}, '{{ escritorio.codigo }}', {{ escritorio.posicion }})"
+                                                style="background-color: #ffc107; color: #000;">
+                                            <i class="fa fa-exchange-alt"></i> Intercambiar
+                                        </button>
+                                    </td>
+                                    {% endif %}
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-5">
+                                        <i class="fa fa-inbox fa-3x text-muted mb-3"></i>
+                                        <p>No hay escritorios en este piso</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let escritorioSeleccionado = null;
+
+function seleccionarParaIntercambio(id, codigo, posicion) {
+    if (!escritorioSeleccionado) {
+        // Primer escritorio seleccionado
+        escritorioSeleccionado = {
+            id: id,
+            codigo: codigo,
+            posicion: posicion
+        };
+        
+        Swal.fire({
+            icon: 'success',
+            title: 'Escritorio Seleccionado',
+            text: `Has seleccionado ${codigo} (Posición ${posicion}). Ahora selecciona otro escritorio para intercambiar.`,
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000
+        });
+    } else {
+        // Segundo escritorio seleccionado - hacer intercambio
+        if (escritorioSeleccionado.id === id) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Mismo Escritorio',
+                text: 'Debes seleccionar un escritorio diferente para intercambiar.',
+                timer: 2000
+            });
+            return;
+        }
+        
+        // Confirmar intercambio
+        Swal.fire({
+            title: '¿Intercambiar posiciones?',
+            html: `
+                <div class="text-start">
+                    <p><strong>${escritorioSeleccionado.codigo}</strong> (Posición ${escritorioSeleccionado.posicion})</p>
+                    <p class="text-center"><i class="fa fa-exchange-alt fa-2x text-primary"></i></p>
+                    <p><strong>${codigo}</strong> (Posición ${posicion})</p>
+                </div>
+            `,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, intercambiar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#4A6785'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Hacer petición AJAX
+                $.ajax({
+                    url: "{% url 'intercambiar_escritorios' %}",
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        escritorio1_id: escritorioSeleccionado.id,
+                        escritorio2_id: id,
+                        posicion1: escritorioSeleccionado.posicion,
+                        posicion2: posicion
+                    }),
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: '¡Intercambiado!',
+                                text: `${escritorioSeleccionado.codigo} y ${codigo} han intercambiado posiciones.`,
+                                timer: 2000,
+                                showConfirmButton: false
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: response.message || 'No se pudo intercambiar',
+                                timer: 2500
+                            });
+                        }
+                        escritorioSeleccionado = null;
+                    },
+                    error: function(xhr) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Error al intercambiar escritorios',
+                            timer: 2500
+                        });
+                        escritorioSeleccionado = null;
+                    }
+                });
+            } else {
+                escritorioSeleccionado = null;
+            }
+        });
+    }
+}
+</script>
+{% endblock %}
 <section class="ftco-section bg-light">
     <div class="container-fluid">
         <div class="row justify-content-center pb-4 mb-3">
