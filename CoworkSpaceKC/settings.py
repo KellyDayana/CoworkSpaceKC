@@ -239,8 +239,8 @@ cloudinary.config(
     secure=True
 )
 
-# En producción, usar Cloudinary para archivos media
-if not DEBUG:
+# Siempre usar Cloudinary si DATABASE_URL existe (indica producción)
+if database_url:
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 # En desarrollo local, usar almacenamiento normal
 else:
