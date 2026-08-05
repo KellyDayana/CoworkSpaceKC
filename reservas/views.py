@@ -1639,18 +1639,206 @@ def eliminar_factura(request, id):
 
 
 @login_required
-def generar_pdf_factura(request, id):
-    """Genera un PDF básico de la factura"""
+def descargar_pdf_factura(request, id):
+    """Descarga el PDF de la factura"""
     factura = get_object_or_404(Factura, id=id)
-    
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'inline; filename="factura_{factura.numero_factura}.pdf"'
-    
-    # Aquí irá la lógica de generación con reportlab cuando se necesite
-    # Por ahora devolvemos un mensaje
-    response.write(b'PDF de factura - Implementar con reportlab')
-    
+    pdf_bytes = _generar_pdf_factura(factura)
+    response = HttpResponse(pdf_bytes, content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="Factura_{factura.numero_factura}.pdf"'
     return response
+
+
+@login_required
+def enviar_pdf_factura(request, id):
+    """Reenvía el PDF de la factura por correo"""
+    factura = get_object_or_404(Factura, id=id)
+    try:
+        pdf_bytes = _generar_pdf_factura(factura)
+        asunto = f'CoworkSpace KC - Factura {factura.numero_factura}'
+        mensaje_texto = f'''Hola {factura.empresa.nombre},
+
+Adjunto encontrarás la factura {factura.numero_factura}.
+
+Detalle:
+- Subtotal: ${factura.subtotal}
+- IVA (15%): ${factura.iva}
+- Total: ${factura.total}
+- Estado: {factura.get_estado_display()}
+
+Saludos,
+CoworkSpace KC'''
+        mensaje_html = f'''<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;border:1px solid #eee;border-radius:8px;">
+<div style="background:#4A6785;padding:28px;text-align:center;">
+<h1 style="color:#fff;margin:0;">CoworkSpace KC</h1>
+</div>
+<div style="padding:32px;">
+<h2>Factura {factura.numero_factura}</h2>
+<p>Total: <strong>${factura.total}</strong></p>
+</div>
+</div>'''
+        _enviar_email_con_pdf(
+            factura.empresa.email,
+            asunto,
+            mensaje_texto,
+            mensaje_html,
+            pdf_bytes,
+            f'Factura_{factura.numero_factura}.pdf'
+        )
+        messages.success(request, f'PDF enviado a {factura.empresa.email}')
+    except Exception as e:
+        messages.error(request, f'Error al enviar correo: {e}')
+    return redirect('factura_lista')
+
+
+@login_required
+def descargar_pdf_reserva(request, id):
+    """Descarga el PDF de la reserva"""
+    reserva = get_object_or_404(ReservaSala, id=id)
+    pdf_bytes = _generar_pdf_reserva(reserva)
+    response = HttpResponse(pdf_bytes, content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="Reserva_{reserva.sala.nombre}_{reserva.fecha}.pdf"'
+    return response
+
+
+@login_required
+def enviar_pdf_reserva(request, id):
+    """Reenvía el PDF de la reserva por correo"""
+    reserva = get_object_or_404(ReservaSala, id=id)
+    try:
+        pdf_bytes = _generar_pdf_reserva(reserva)
+        asunto = f'CoworkSpace KC - Reserva: {reserva.sala.nombre}'
+        mensaje_texto = f'''Hola {reserva.miembro.nombre},
+
+Adjunto la confirmación de tu reserva.
+
+Sala: {reserva.sala.nombre}
+Fecha: {reserva.fecha.strftime("%d/%m/%Y")}
+Hora: {reserva.hora_inicio.strftime("%H:%M")} - {reserva.hora_fin.strftime("%H:%M")}
+
+Saludos,
+CoworkSpace KC'''
+        mensaje_html = f'''<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+<div style="background:#4A6785;padding:28px;text-align:center;">
+<h1 style="color:#fff;margin:0;">CoworkSpace KC</h1>
+</div>
+<div style="padding:32px;">
+<h2>Reserva Confirmada</h2>
+<p>Sala: <strong>{reserva.sala.nombre}</strong></p>
+</div>
+</div>'''
+        _enviar_email_con_pdf(
+            reserva.miembro.email,
+            asunto,
+            mensaje_texto,
+            mensaje_html,
+            pdf_bytes,
+            f'Reserva_{reserva.sala.nombre}_{reserva.fecha}.pdf'
+        )
+        messages.success(request, f'PDF enviado a {reserva.miembro.email}')
+    except Exception as e:
+        messages.error(request, f'Error al enviar correo: {e}')
+    return redirect('reserva_lista')
+
+
+@login_required
+def descargar_pdf_evento(request, id):
+    """Descarga el PDF del evento"""
+    evento = get_object_or_404(Evento, id=id)
+    pdf_bytes = _generar_pdf_evento(evento)
+    response = HttpResponse(pdf_bytes, content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="Evento_{evento.titulo}.pdf"'
+    return response
+
+
+@login_required
+def enviar_pdf_evento(request, id):
+    """Reenvía el PDF del evento por correo"""
+    evento = get_object_or_404(Evento, id=id)
+    try:
+        pdf_bytes = _generar_pdf_evento(evento)
+        asunto = f'CoworkSpace KC - Evento: {evento.titulo}'
+        mensaje_texto = f'''Hola {evento.organizador.nombre},
+
+Adjunto la confirmación del evento.
+
+Evento: {evento.titulo}
+Fecha: {evento.fecha_evento.strftime("%d/%m/%Y")}
+
+Saludos,
+CoworkSpace KC'''
+        mensaje_html = f'''<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+<div style="background:#4A6785;padding:28px;text-align:center;">
+<h1 style="color:#fff;margin:0;">CoworkSpace KC</h1>
+</div>
+<div style="padding:32px;">
+<h2>Evento Confirmado</h2>
+<p>Título: <strong>{evento.titulo}</strong></p>
+</div>
+</div>'''
+        _enviar_email_con_pdf(
+            evento.organizador.email,
+            asunto,
+            mensaje_texto,
+            mensaje_html,
+            pdf_bytes,
+            f'Evento_{evento.titulo}.pdf'
+        )
+        messages.success(request, f'PDF enviado a {evento.organizador.email}')
+    except Exception as e:
+        messages.error(request, f'Error al enviar correo: {e}')
+    return redirect('evento_lista')
+
+
+@login_required
+def descargar_pdf_escritorio(request, id):
+    """Descarga el PDF del escritorio"""
+    escritorio = get_object_or_404(EscritorioDedicado, id=id)
+    pdf_bytes = _generar_pdf_escritorio(escritorio)
+    response = HttpResponse(pdf_bytes, content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="Escritorio_{escritorio.codigo}.pdf"'
+    return response
+
+
+@login_required
+def enviar_pdf_escritorio(request, id):
+    """Reenvía el PDF del escritorio por correo"""
+    escritorio = get_object_or_404(EscritorioDedicado, id=id)
+    if not escritorio.miembro_asignado:
+        messages.error(request, 'El escritorio no tiene miembro asignado.')
+        return redirect('escritorio_lista')
+    try:
+        pdf_bytes = _generar_pdf_escritorio(escritorio)
+        asunto = f'CoworkSpace KC - Escritorio: {escritorio.codigo}'
+        mensaje_texto = f'''Hola {escritorio.miembro_asignado.nombre},
+
+Adjunto los detalles de tu escritorio asignado.
+
+Código: {escritorio.codigo}
+Ubicación: Piso {escritorio.piso}
+
+Saludos,
+CoworkSpace KC'''
+        mensaje_html = f'''<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+<div style="background:#4A6785;padding:28px;text-align:center;">
+<h1 style="color:#fff;margin:0;">CoworkSpace KC</h1>
+</div>
+<div style="padding:32px;">
+<h2>Escritorio Asignado</h2>
+<p>Código: <strong>{escritorio.codigo}</strong></p>
+</div>
+</div>'''
+        _enviar_email_con_pdf(
+            escritorio.miembro_asignado.email,
+            asunto,
+            mensaje_texto,
+            mensaje_html,
+            pdf_bytes,
+            f'Escritorio_{escritorio.codigo}.pdf'
+        )
+        messages.success(request, f'PDF enviado a {escritorio.miembro_asignado.email}')
+    except Exception as e:
+        messages.error(request, f'Error al enviar correo: {e}')
+    return redirect('escritorio_lista')
 
 
 @login_required

@@ -89,14 +89,29 @@
                                     <td>
                                         {% if user.is_superuser %}
                                         <div class="btn-group" role="group">
+                                            <!-- Botón Ver PDF (solo si tiene miembro asignado) -->
+                                            {% if escritorio.miembro_asignado %}
+                                            <a href="{% url 'descargar_pdf_escritorio' escritorio.id %}" target="_blank"
+                                               class="btn btn-sm" style="background-color: #dc3545; color: white;" title="Ver PDF">
+                                                <i class="fa fa-file-pdf"></i>
+                                            </a>
+                                            <!-- Botón Enviar por Correo -->
+                                            <a href="{% url 'enviar_pdf_escritorio' escritorio.id %}"
+                                               class="btn btn-sm" style="background-color: #17a2b8; color: white;" 
+                                               onclick="return confirm('¿Enviar PDF a {{ escritorio.miembro_asignado.email }}?')" title="Enviar por Correo">
+                                                <i class="fa fa-envelope"></i>
+                                            </a>
+                                            {% endif %}
+                                            <!-- Botón Editar -->
                                             <a href="{% url 'editar_escritorio' escritorio.id %}" 
-                                               class="btn btn-sm btn-warning" title="Editar">
+                                               class="btn btn-sm" style="background-color: #ffc107; color: #000;" title="Editar">
                                                 <i class="fa fa-edit"></i>
                                             </a>
+                                            <!-- Botón Eliminar -->
                                             <a href="#" 
                                                data-url="{% url 'eliminar_escritorio' escritorio.id %}"
                                                onclick="event.preventDefault(); confirmarEliminacion(this)"
-                                               class="btn btn-sm btn-danger" title="Eliminar">
+                                               class="btn btn-sm" style="background-color: #dc3545; color: white;" title="Eliminar">
                                                 <i class="fa fa-trash"></i>
                                             </a>
                                         </div>

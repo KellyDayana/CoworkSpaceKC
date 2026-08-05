@@ -35,7 +35,6 @@
                                     <th>IVA</th>
                                     <th>Total</th>
                                     <th>Estado</th>
-                                    <th>PDF</th>
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
@@ -96,32 +95,37 @@
                                         {% endif %}
                                     </td>
                                     <td>
-                                        {% if factura.pdf %}
-                                            <a href="{{ factura.pdf.url }}" target="_blank" 
-                                               class="btn btn-sm" style="background: #4A6785; color: white;" title="Ver PDF">
-                                                <i class="fa fa-file-pdf"></i> Ver PDF
+                                        <div class="btn-group" role="group">
+                                            <!-- Botón Ver PDF -->
+                                            <a href="{% url 'descargar_pdf_factura' factura.id %}" target="_blank"
+                                               class="btn btn-sm" style="background-color: #dc3545; color: white;" title="Ver PDF">
+                                                <i class="fa fa-file-pdf"></i>
                                             </a>
-                                        {% else %}
-                                            <span class="badge bg-secondary">Sin PDF</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <a href="{% url 'editar_factura' factura.id %}" 
-                                           class="btn btn-sm" style="background: #fd7e14; color: white;" title="Editar">
-                                            <i class="fa fa-edit"></i>
-                                        </a>
-                                        {% if user.is_superuser %}
-                                        <button onclick="confirmarEliminacion(this)" 
-                                                data-url="{% url 'eliminar_factura' factura.id %}"
-                                                class="btn btn-sm btn-danger" title="Eliminar">
-                                            <i class="fa fa-trash"></i>
-                                        </button>
-                                        {% endif %}
+                                            <!-- Botón Enviar por Correo -->
+                                            <a href="{% url 'enviar_pdf_factura' factura.id %}"
+                                               class="btn btn-sm" style="background-color: #17a2b8; color: white;" 
+                                               onclick="return confirm('¿Enviar PDF a {{ factura.empresa.email }}?')" title="Enviar por Correo">
+                                                <i class="fa fa-envelope"></i>
+                                            </a>
+                                            <!-- Botón Editar -->
+                                            <a href="{% url 'editar_factura' factura.id %}" 
+                                               class="btn btn-sm" style="background-color: #fd7e14; color: white;" title="Editar">
+                                                <i class="fa fa-edit"></i>
+                                            </a>
+                                            <!-- Botón Eliminar -->
+                                            {% if user.is_superuser %}
+                                            <button onclick="confirmarEliminacion(this)" 
+                                                    data-url="{% url 'eliminar_factura' factura.id %}"
+                                                    class="btn btn-sm" style="background-color: #dc3545; color: white;" title="Eliminar">
+                                                <i class="fa fa-trash"></i>
+                                            </button>
+                                            {% endif %}
+                                        </div>
                                     </td>
                                 </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="11" class="text-center">
+                                    <td colspan="10" class="text-center">
                                         <div class="py-4">
                                             <i class="fa fa-file-invoice fa-3x text-muted mb-3"></i>
                                             <p class="text-muted">No hay facturas registradas.</p>

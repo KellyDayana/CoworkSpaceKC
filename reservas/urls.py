@@ -71,8 +71,17 @@ urlpatterns = [
     path('facturas/editar/<int:id>/', views.editar_factura, name='editar_factura'),
     path('facturas/procesarEdicion/', views.procesar_edicion_factura, name='procesar_edicion_factura'),
     path('facturas/eliminar/<int:id>/', views.eliminar_factura, name='eliminar_factura'),
-    path('facturas/generar_pdf/<int:id>/', views.generar_pdf_factura, name='generar_pdf_factura'),
+    path('facturas/pdf/<int:id>/', views.descargar_pdf_factura, name='descargar_pdf_factura'),
+    path('facturas/enviar/<int:id>/', views.enviar_pdf_factura, name='enviar_pdf_factura'),
     path('facturas/calcular-subtotal/<int:empresa_id>/', views.calcular_subtotal_automatico, name='calcular_subtotal_automatico'),
+    
+    # PDFs de Reservas, Eventos y Escritorios
+    path('reservas/pdf/<int:id>/', views.descargar_pdf_reserva, name='descargar_pdf_reserva'),
+    path('reservas/enviar/<int:id>/', views.enviar_pdf_reserva, name='enviar_pdf_reserva'),
+    path('eventos/pdf/<int:id>/', views.descargar_pdf_evento, name='descargar_pdf_evento'),
+    path('eventos/enviar/<int:id>/', views.enviar_pdf_evento, name='enviar_pdf_evento'),
+    path('escritorios/pdf/<int:id>/', views.descargar_pdf_escritorio, name='descargar_pdf_escritorio'),
+    path('escritorios/enviar/<int:id>/', views.enviar_pdf_escritorio, name='enviar_pdf_escritorio'),
     
     # Reportes
     path('reportes/', views.reportes, name='reportes'),

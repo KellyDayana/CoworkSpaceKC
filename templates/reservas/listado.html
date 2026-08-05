@@ -95,15 +95,30 @@
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <a href="{% url 'editar_reserva' reserva.id %}" 
-                                           class="btn btn-sm btn-warning" title="Editar">
-                                            <i class="fa fa-edit"></i>
-                                        </a>
-                                        <button onclick="confirmarEliminacion(this)" 
-                                                data-url="{% url 'eliminar_reserva' reserva.id %}"
-                                                class="btn btn-sm btn-danger" title="Eliminar">
-                                            <i class="fa fa-trash"></i>
-                                        </button>
+                                        <div class="btn-group" role="group">
+                                            <!-- Botón Ver PDF -->
+                                            <a href="{% url 'descargar_pdf_reserva' reserva.id %}" target="_blank"
+                                               class="btn btn-sm" style="background-color: #dc3545; color: white;" title="Ver PDF">
+                                                <i class="fa fa-file-pdf"></i>
+                                            </a>
+                                            <!-- Botón Enviar por Correo -->
+                                            <a href="{% url 'enviar_pdf_reserva' reserva.id %}"
+                                               class="btn btn-sm" style="background-color: #17a2b8; color: white;" 
+                                               onclick="return confirm('¿Enviar PDF a {{ reserva.miembro.email }}?')" title="Enviar por Correo">
+                                                <i class="fa fa-envelope"></i>
+                                            </a>
+                                            <!-- Botón Editar -->
+                                            <a href="{% url 'editar_reserva' reserva.id %}" 
+                                               class="btn btn-sm" style="background-color: #ffc107; color: #000;" title="Editar">
+                                                <i class="fa fa-edit"></i>
+                                            </a>
+                                            <!-- Botón Eliminar -->
+                                            <button onclick="confirmarEliminacion(this)" 
+                                                    data-url="{% url 'eliminar_reserva' reserva.id %}"
+                                                    class="btn btn-sm" style="background-color: #dc3545; color: white;" title="Eliminar">
+                                                <i class="fa fa-trash"></i>
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                                 {% empty %}
