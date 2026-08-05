@@ -202,21 +202,26 @@ LOGIN_REDIRECT_URL = '/'
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# ==================== CONFIGURACIÓN DE EMAIL ====================
-# Para desarrollo: usa la consola (imprime emails en terminal)
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# ==================== CONFIGURACIÓN DE EMAIL (SMTP) ====================
+# Configuración con variables de entorno para seguridad
+EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
 
-# Para producción: descomenta y configura con tu servidor SMTP
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = 'smtp.gmail.com'  # Cambiar según tu proveedor
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = 'tu-email@gmail.com'  # Tu email
-# EMAIL_HOST_PASSWORD = 'tu-contraseña-de-app'  # Contraseña de aplicación
-# DEFAULT_FROM_EMAIL = 'CoworkSpace KC <tu-email@gmail.com>'
+# Configuración SMTP (Gmail como ejemplo, compatible con otros proveedores)
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'CoworkSpace KC <noreply@coworkspacekc.com>')
 
-# Email predeterminado del sistema
-DEFAULT_FROM_EMAIL = 'CoworkSpace KC <noreply@coworkspacekc.com>'
+# Para desarrollo local: usa consola si no hay credenciales
+if not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    print("EMAIL: Usando consola (desarrollo). Configure EMAIL_HOST_USER y EMAIL_HOST_PASSWORD para SMTP real.")
+
+# CONFIDENCIALIDAD: Ocultar información sensible en logs
+import logging
+logging.getLogger('django.core.mail').setLevel(logging.ERROR)
 
 
 # ==================== CONFIGURACIÓN DE CLOUDINARY ====================

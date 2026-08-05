@@ -1,0 +1,125 @@
+╔═══════════════════════════════════════════════════════════════╗
+║          CREDENCIALES DE ACCESO - CoworkSpace KC              ║
+║                                                               ║
+║        Sistema de Gestión de Espacios de Coworking           ║
+╚═══════════════════════════════════════════════════════════════╝
+
+========================================================
+  1. ADMINISTRADOR DEL SISTEMA (Superusuario)
+========================================================
+
+Usuario:    admin
+Email:      admin@coworkspace.com
+Contraseña: admin123
+
+Permisos:
+- Acceso completo al sistema
+- Crear/Editar/Eliminar empresas
+- Crear/Editar/Eliminar salas y escritorios
+- Ver Dashboard con métricas
+- Gestionar todas las reservas y facturas
+- Exportar reportes (PDF, Excel)
+- Acceso al panel de administración de Django
+
+
+========================================================
+  2. USUARIO EMPRESA (Perfil Normal)
+========================================================
+
+Para crear un usuario empresa:
+1. Ir a: Registro (desde la página de login)
+2. Llenar el formulario con:
+   - Nombre de usuario
+   - Email
+   - Contraseña
+   - Datos personales (nombre, apellido, cédula, teléfono)
+   - Seleccionar empresa existente
+   - Cargo
+
+Ejemplo de Usuario Empresa:
+Usuario:    juan.perez
+Email:      juan.perez@empresa.com
+Contraseña: [la que defina el usuario]
+Empresa:    [selecciona de la lista]
+Cargo:      empleado / gerente / administrador
+
+Permisos:
+- Ver información de su empresa
+- Ver sus propias reservas
+- Crear nuevas reservas
+- Ver eventos públicos
+- Ver salas disponibles
+- Acceso limitado (no puede ver otras empresas)
+
+
+========================================================
+  3. CREAR USUARIOS ADICIONALES
+========================================================
+
+OPCIÓN A: Desde el sistema (Registro)
+   - Ir a /registro/
+   - Llenar formulario
+   - Seleccionar empresa
+
+OPCIÓN B: Comando Django (para admin)
+   python manage.py createsuperuser
+   (crea otro administrador)
+
+OPCIÓN C: Panel Admin de Django
+   - Login como admin
+   - Ir a /admin/
+   - Agregar usuarios desde ahí
+
+
+========================================================
+  4. URLs DE ACCESO
+========================================================
+
+Producción (Render):
+https://coworkspacekc.onrender.com/
+
+Local:
+http://localhost:8000/
+
+Login:          /login/
+Registro:       /registro/
+Dashboard:      /dashboard/  (solo admin)
+Admin Django:   /admin/      (solo admin)
+
+
+========================================================
+  5. NOTAS IMPORTANTES
+========================================================
+
+1. El superusuario (admin) tiene acceso completo
+2. Los usuarios normales solo ven su empresa
+3. Para cambiar contraseña: usar "Olvidé mi contraseña" en login
+4. El sistema usa PostgreSQL en producción
+5. Validaciones activas:
+   - Cédula única (10 dígitos)
+   - RUC único (13 dígitos)
+   - Email único
+   - Teléfono (9-10 dígitos)
+
+
+========================================================
+  6. COMANDOS ÚTILES
+========================================================
+
+Crear superusuario:
+python manage.py crear_superusuario
+
+Resetear contraseña:
+python manage.py changepassword admin
+
+Ver usuarios:
+python manage.py shell
+>>> from django.contrib.auth.models import User
+>>> User.objects.all()
+
+
+═══════════════════════════════════════════════════════
+  Fecha: 05/08/2026
+  Sistema: CoworkSpace KC v1.0
+  Desarrollado para gestión de espacios de coworking
+═══════════════════════════════════════════════════════

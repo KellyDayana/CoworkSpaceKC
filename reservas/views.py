@@ -26,10 +26,11 @@ from .models import (
 )
 
 
-# ==================== FUNCIONES DE GENERACIÓN DE PDFs ====================
-
 def _generar_pdf_factura(factura):
-    """Genera PDF de factura y devuelve los bytes"""
+    """
+    Genera documento PDF con detalles de factura
+    Retorna bytes del PDF generado
+    """
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
         buffer, pagesize=letter,
@@ -129,7 +130,10 @@ def _generar_pdf_factura(factura):
 
 
 def _generar_pdf_reserva(reserva):
-    """Genera PDF de confirmación de reserva de sala y devuelve los bytes"""
+    """
+    Genera confirmación de reserva en formato PDF
+    Retorna contenido binario del documento
+    """
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
         buffer, pagesize=letter,
@@ -184,7 +188,9 @@ def _generar_pdf_reserva(reserva):
 
 
 def _generar_pdf_evento(evento):
-    """Genera PDF de confirmación de evento y devuelve los bytes"""
+    """
+    Crea documento PDF con información del evento
+    """
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
         buffer, pagesize=letter,
@@ -239,7 +245,9 @@ def _generar_pdf_evento(evento):
 
 
 def _generar_pdf_escritorio(escritorio):
-    """Genera PDF de asignación de escritorio y devuelve los bytes"""
+    """
+    Genera documento de asignación de escritorio
+    """
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
         buffer, pagesize=letter,
@@ -297,7 +305,9 @@ def _generar_pdf_escritorio(escritorio):
 
 
 def _enviar_email_con_pdf(destinatario, asunto, mensaje_texto, mensaje_html, pdf_bytes, nombre_archivo):
-    """Función genérica para enviar email con PDF adjunto"""
+    """
+    Envía correo electrónico con adjunto PDF
+    """
     try:
         email = EmailMultiAlternatives(
             subject=asunto,
@@ -314,7 +324,7 @@ def _enviar_email_con_pdf(destinatario, asunto, mensaje_texto, mensaje_html, pdf
         return False
 
 
-# ==================== AUTENTICACIÓN ====================
+
 
 def login_view(request):
     if request.method == 'POST':
@@ -424,7 +434,7 @@ Equipo CoworkSpace KC
     return render(request, 'auth/registro.html', {'empresas': empresas})
 
 
-# ==================== INICIO Y DASHBOARD ====================
+
 
 def inicio(request):
     # Vista pública del inicio (no requiere login)
@@ -449,7 +459,7 @@ def dashboard(request):
         messages.warning(request, 'El Dashboard solo está disponible para administradores.')
         return redirect('inicio')
     
-    # Dashboard con métricas detalladas
+    # Dashboard con métricas detalladas para toma de decisiones
     empresas = EmpresaCliente.objects.filter(activo=True)
     salas = SalaReunion.objects.filter(activo=True)
     escritorios = EscritorioDedicado.objects.all()
@@ -462,17 +472,82 @@ def dashboard(request):
     # Calcular metros cuadrados ocupados
     total_metros = sum([sala.metros_cuadrados for sala in salas])
     
+    # Ingresos del mes actual
+    facturas_mes = Factura.objects.filter(
+        fecha_emision__month=date.today().month,
+        fecha_emision__year=date.today().year,
+        estado='pagada'
+    )
+    ingresos_mes = sum([f.total for f in facturas_mes])
+    
+    # Ingresos del mes anterior
+    mes_anterior = date.today().replace(day=1) - datetime.timedelta(days=1)
+    facturas_mes_anterior = Factura.objects.filter(
+        fecha_emision__month=mes_anterior.month,
+        fecha_emision__year=mes_anterior.year,
+        estado='pagada'
+    )
+    ingresos_mes_anterior = sum([f.total for f in facturas_mes_anterior])
+    
+    # Calcular tasa de crecimiento
+    if ingresos_mes_anterior > 0:
+        tasa_crecimiento = ((ingresos_mes - ingresos_mes_anterior) / ingresos_mes_anterior * 100)
+    else:
+        tasa_crecimiento = 100 if ingresos_mes > 0 else 0
+    
+    # Reservas del mes
+    reservas_mes = ReservaSala.objects.filter(
+        fecha__month=date.today().month,
+        fecha__year=date.today().year
+    ).count()
+    
+    # Top 5 empresas por facturación
+    top_empresas = []
+    for empresa in empresas:
+        facturas_empresa = Factura.objects.filter(empresa=empresa, estado='pagada')
+        total_empresa = sum([f.total for f in facturas_empresa])
+        if total_empresa > 0:
+            top_empresas.append({
+                'empresa': empresa,
+                'total': total_empresa
+            })
+    top_empresas = sorted(top_empresas, key=lambda x: x['total'], reverse=True)[:5]
+    
+    # Facturas pendientes de pago
+    facturas_pendientes = Factura.objects.filter(estado='pendiente').count()
+    facturas_vencidas = Factura.objects.filter(
+        estado='pendiente',
+        fecha_vencimiento__lt=date.today()
+    ).count()
+    
+    # Eventos próximos (próximos 7 días)
+    from datetime import timedelta
+    eventos_proximos = Evento.objects.filter(
+        fecha_evento__gte=date.today(),
+        fecha_evento__lte=date.today() + timedelta(days=7)
+    ).count()
+    
     context = {
         'empresas': empresas,
         'tasa_ocupacion': round(tasa_ocupacion, 2),
         'total_metros': total_metros,
         'escritorios_ocupados': escritorios_ocupados,
         'total_escritorios': total_escritorios,
+        'ingresos_mes': ingresos_mes,
+        'ingresos_mes_anterior': ingresos_mes_anterior,
+        'tasa_crecimiento': round(tasa_crecimiento, 2),
+        'reservas_mes': reservas_mes,
+        'top_empresas': top_empresas,
+        'facturas_pendientes': facturas_pendientes,
+        'facturas_vencidas': facturas_vencidas,
+        'eventos_proximos': eventos_proximos,
+        'total_salas': salas.count(),
+        'total_miembros': Miembro.objects.filter(activo=True).count(),
     }
     return render(request, 'base/dashboard.html', context)
 
 
-# ==================== CRUD EMPRESAS CLIENTES ====================
+
 
 @login_required
 def empresa_lista(request):
@@ -508,18 +583,40 @@ def guardar_empresa(request):
         return redirect('empresa_lista')
     
     if request.method == 'POST':
-        EmpresaCliente.objects.create(
-            nombre=request.POST['nombre'],
-            ruc=request.POST['ruc'],
-            telefono=request.POST['telefono'],
-            email=request.POST['email'],
-            direccion=request.POST['direccion'],
-            plan=request.POST['plan'],
-            logo=request.FILES.get('logo'),
-            activo='activo' in request.POST
-        )
-        messages.success(request, 'Empresa guardada correctamente.')
-        return redirect('empresa_lista')
+        ruc = request.POST.get('ruc', '').strip()
+        email = request.POST.get('email', '').strip()
+        
+        # Validar RUC único
+        if EmpresaCliente.objects.filter(ruc=ruc).exists():
+            messages.error(request, f'El RUC {ruc} ya está registrado. Cada empresa debe tener un RUC único.')
+            return redirect('nueva_empresa')
+        
+        # Validar email único
+        if EmpresaCliente.objects.filter(email=email).exists():
+            messages.error(request, f'El email {email} ya está registrado. Cada empresa debe tener un email único.')
+            return redirect('nueva_empresa')
+        
+        # Validar RUC (debe tener 13 dígitos)
+        if len(ruc) != 13 or not ruc.isdigit():
+            messages.error(request, 'El RUC debe tener exactamente 13 dígitos numéricos.')
+            return redirect('nueva_empresa')
+        
+        try:
+            EmpresaCliente.objects.create(
+                nombre=request.POST['nombre'],
+                ruc=ruc,
+                telefono=request.POST['telefono'],
+                email=email,
+                direccion=request.POST['direccion'],
+                plan=request.POST['plan'],
+                logo=request.FILES.get('logo'),
+                activo='activo' in request.POST
+            )
+            messages.success(request, 'Empresa guardada correctamente.')
+            return redirect('empresa_lista')
+        except Exception as e:
+            messages.error(request, f'Error al guardar la empresa: {str(e)}')
+            return redirect('nueva_empresa')
 
 
 @login_required
@@ -556,23 +653,45 @@ def procesar_edicion_empresa(request):
                 messages.error(request, 'No tienes permisos para editar empresas.')
                 return redirect('empresa_lista')
         
-        empresa.nombre = request.POST['nombre']
-        empresa.ruc = request.POST['ruc']
-        empresa.telefono = request.POST['telefono']
-        empresa.email = request.POST['email']
-        empresa.direccion = request.POST['direccion']
-        empresa.plan = request.POST['plan']
-        empresa.activo = 'activo' in request.POST
+        ruc = request.POST.get('ruc', '').strip()
+        email = request.POST.get('email', '').strip()
         
-        nuevo_logo = request.FILES.get('logo')
-        if nuevo_logo:
-            if empresa.logo and os.path.isfile(empresa.logo.path):
-                os.remove(empresa.logo.path)
-            empresa.logo = nuevo_logo
+        # Validar RUC único (excluir la empresa actual)
+        if EmpresaCliente.objects.filter(ruc=ruc).exclude(id=empresa.id).exists():
+            messages.error(request, f'El RUC {ruc} ya está registrado en otra empresa.')
+            return redirect('editar_empresa', id=empresa.id)
         
-        empresa.save()
-        messages.success(request, 'Empresa actualizada correctamente.')
-        return redirect('empresa_lista')
+        # Validar email único (excluir la empresa actual)
+        if EmpresaCliente.objects.filter(email=email).exclude(id=empresa.id).exists():
+            messages.error(request, f'El email {email} ya está registrado en otra empresa.')
+            return redirect('editar_empresa', id=empresa.id)
+        
+        # Validar RUC (debe tener 13 dígitos)
+        if len(ruc) != 13 or not ruc.isdigit():
+            messages.error(request, 'El RUC debe tener exactamente 13 dígitos numéricos.')
+            return redirect('editar_empresa', id=empresa.id)
+        
+        try:
+            empresa.nombre = request.POST['nombre']
+            empresa.ruc = ruc
+            empresa.telefono = request.POST['telefono']
+            empresa.email = email
+            empresa.direccion = request.POST['direccion']
+            empresa.plan = request.POST['plan']
+            empresa.activo = 'activo' in request.POST
+            
+            nuevo_logo = request.FILES.get('logo')
+            if nuevo_logo:
+                if empresa.logo and os.path.isfile(empresa.logo.path):
+                    os.remove(empresa.logo.path)
+                empresa.logo = nuevo_logo
+            
+            empresa.save()
+            messages.success(request, 'Empresa actualizada correctamente.')
+            return redirect('empresa_lista')
+        except Exception as e:
+            messages.error(request, f'Error al actualizar la empresa: {str(e)}')
+            return redirect('editar_empresa', id=empresa.id)
 
 
 @login_required
@@ -590,7 +709,7 @@ def eliminar_empresa(request, id):
     return redirect('empresa_lista')
 
 
-# ==================== CRUD MIEMBROS ====================
+
 
 @login_required
 def miembro_lista(request, empresa_id):
@@ -609,20 +728,42 @@ def nuevo_miembro(request, empresa_id):
 def guardar_miembro(request, empresa_id):
     if request.method == 'POST':
         empresa = get_object_or_404(EmpresaCliente, id=empresa_id)
-        Miembro.objects.create(
-            empresa=empresa,
-            cedula=request.POST['cedula'],
-            nombre=request.POST['nombre'],
-            apellido=request.POST['apellido'],
-            email=request.POST['email'],
-            telefono=request.POST['telefono'],
-            cargo=request.POST['cargo'],
-            fecha_ingreso=request.POST['fecha_ingreso'],
-            foto=request.FILES.get('foto'),
-            activo='activo' in request.POST
-        )
-        messages.success(request, 'Miembro guardado correctamente.')
-        return redirect('miembro_lista', empresa_id=empresa_id)
+        cedula = request.POST.get('cedula', '').strip()
+        email = request.POST.get('email', '').strip()
+        
+        # Validar cédula única
+        if Miembro.objects.filter(cedula=cedula).exists():
+            messages.error(request, f'La cédula {cedula} ya está registrada. Cada miembro debe tener una cédula única.')
+            return redirect('nuevo_miembro', empresa_id=empresa_id)
+        
+        # Validar email único
+        if Miembro.objects.filter(email=email).exists():
+            messages.error(request, f'El email {email} ya está registrado. Cada miembro debe tener un email único.')
+            return redirect('nuevo_miembro', empresa_id=empresa_id)
+        
+        # Validar cédula ecuatoriana (10 dígitos)
+        if len(cedula) != 10 or not cedula.isdigit():
+            messages.error(request, 'La cédula debe tener exactamente 10 dígitos numéricos.')
+            return redirect('nuevo_miembro', empresa_id=empresa_id)
+        
+        try:
+            Miembro.objects.create(
+                empresa=empresa,
+                cedula=cedula,
+                nombre=request.POST['nombre'],
+                apellido=request.POST['apellido'],
+                email=email,
+                telefono=request.POST['telefono'],
+                cargo=request.POST['cargo'],
+                fecha_ingreso=request.POST['fecha_ingreso'],
+                foto=request.FILES.get('foto'),
+                activo='activo' in request.POST
+            )
+            messages.success(request, 'Miembro guardado correctamente.')
+            return redirect('miembro_lista', empresa_id=empresa_id)
+        except Exception as e:
+            messages.error(request, f'Error al guardar el miembro: {str(e)}')
+            return redirect('nuevo_miembro', empresa_id=empresa_id)
 
 
 @login_required
@@ -635,24 +776,46 @@ def editar_miembro(request, id):
 def procesar_edicion_miembro(request):
     if request.method == 'POST':
         miembro = get_object_or_404(Miembro, id=request.POST['id'])
-        miembro.cedula = request.POST['cedula']
-        miembro.nombre = request.POST['nombre']
-        miembro.apellido = request.POST['apellido']
-        miembro.email = request.POST['email']
-        miembro.telefono = request.POST['telefono']
-        miembro.cargo = request.POST['cargo']
-        miembro.fecha_ingreso = request.POST['fecha_ingreso']
-        miembro.activo = 'activo' in request.POST
+        cedula = request.POST.get('cedula', '').strip()
+        email = request.POST.get('email', '').strip()
         
-        nueva_foto = request.FILES.get('foto')
-        if nueva_foto:
-            if miembro.foto and os.path.isfile(miembro.foto.path):
-                os.remove(miembro.foto.path)
-            miembro.foto = nueva_foto
+        # Validar cédula única (excluir el miembro actual)
+        if Miembro.objects.filter(cedula=cedula).exclude(id=miembro.id).exists():
+            messages.error(request, f'La cédula {cedula} ya está registrada en otro miembro.')
+            return redirect('editar_miembro', id=miembro.id)
         
-        miembro.save()
-        messages.success(request, 'Miembro actualizado correctamente.')
-        return redirect('miembro_lista', empresa_id=miembro.empresa.id)
+        # Validar email único (excluir el miembro actual)
+        if Miembro.objects.filter(email=email).exclude(id=miembro.id).exists():
+            messages.error(request, f'El email {email} ya está registrado en otro miembro.')
+            return redirect('editar_miembro', id=miembro.id)
+        
+        # Validar cédula ecuatoriana (10 dígitos)
+        if len(cedula) != 10 or not cedula.isdigit():
+            messages.error(request, 'La cédula debe tener exactamente 10 dígitos numéricos.')
+            return redirect('editar_miembro', id=miembro.id)
+        
+        try:
+            miembro.cedula = cedula
+            miembro.nombre = request.POST['nombre']
+            miembro.apellido = request.POST['apellido']
+            miembro.email = email
+            miembro.telefono = request.POST['telefono']
+            miembro.cargo = request.POST['cargo']
+            miembro.fecha_ingreso = request.POST['fecha_ingreso']
+            miembro.activo = 'activo' in request.POST
+            
+            nueva_foto = request.FILES.get('foto')
+            if nueva_foto:
+                if miembro.foto and os.path.isfile(miembro.foto.path):
+                    os.remove(miembro.foto.path)
+                miembro.foto = nueva_foto
+            
+            miembro.save()
+            messages.success(request, 'Miembro actualizado correctamente.')
+            return redirect('miembro_lista', empresa_id=miembro.empresa.id)
+        except Exception as e:
+            messages.error(request, f'Error al actualizar el miembro: {str(e)}')
+            return redirect('editar_miembro', id=miembro.id)
 
 
 @login_required
@@ -666,7 +829,7 @@ def eliminar_miembro(request, id):
     return redirect('miembro_lista', empresa_id=empresa_id)
 
 
-# ==================== CRUD SALAS DE REUNIÓN ====================
+
 
 def sala_lista(request):
     # Vista pública - Todos pueden ver las salas disponibles
@@ -1267,7 +1430,7 @@ def eliminar_reserva(request, id):
     return redirect('reserva_lista')
 
 
-# ==================== CRUD EVENTOS ====================
+
 
 def evento_lista(request):
     # Vista pública - Todos pueden ver los eventos (especialmente los públicos)
@@ -1931,49 +2094,7 @@ def calcular_subtotal_automatico(request, empresa_id):
         })
 
 
-# ==================== REPORTES ====================
 
-@login_required
-def reportes(request):
-    """Vista principal de reportes"""
-    return render(request, 'reportes/index.html')
-
-
-
-@login_required
-def reporte_ocupacion(request):
-    """Reporte de tasa de ocupación por metros cuadrados"""
-    salas = SalaReunion.objects.filter(activo=True)
-    escritorios = EscritorioDedicado.objects.all()
-    
-    # Calcular ocupación de escritorios
-    total_escritorios = escritorios.count()
-    escritorios_ocupados = escritorios.filter(estado='ocupado').count()
-    escritorios_disponibles = escritorios.filter(estado='disponible').count()
-    escritorios_mantenimiento = escritorios.filter(estado='mantenimiento').count()
-    
-    tasa_ocupacion = (escritorios_ocupados / total_escritorios * 100) if total_escritorios > 0 else 0
-    
-    # Metros cuadrados totales
-    total_metros = sum([sala.metros_cuadrados for sala in salas])
-    
-    # Reservas del mes actual
-    reservas_mes = ReservaSala.objects.filter(
-        fecha__month=date.today().month,
-        fecha__year=date.today().year
-    )
-    
-    context = {
-        'total_escritorios': total_escritorios,
-        'escritorios_ocupados': escritorios_ocupados,
-        'escritorios_disponibles': escritorios_disponibles,
-        'escritorios_mantenimiento': escritorios_mantenimiento,
-        'tasa_ocupacion': round(tasa_ocupacion, 2),
-        'total_metros': total_metros,
-        'total_salas': salas.count(),
-        'reservas_mes': reservas_mes.count(),
-    }
-    return render(request, 'reportes/ocupacion.html', context)
 
 
 # ==================== CRUD ESCRITORIOS DEDICADOS ====================
@@ -2208,15 +2329,11 @@ def eliminar_factura(request, id):
 
 @login_required
 def generar_pdf_factura(request, id):
-    # Generar PDF de la factura
-    factura = get_object_or_404(Factura, id=id)
-    # Aquí iría la lógica para generar PDF con reportlab
-    # Por ahora solo retornamos un mensaje
-    messages.info(request, 'Función de generación de PDF en desarrollo.')
-    return redirect('factura_lista')
+    # Generar PDF de la factura (ya implementado en descargar_pdf_factura)
+    return redirect('descargar_pdf_factura', id=id)
 
 
-# ==================== REPORTES ====================
+
 
 @login_required
 def reportes(request):
@@ -2314,3 +2431,189 @@ def reporte_facturacion(request):
         'total_facturacion': total_facturacion,
     }
     return render(request, 'reportes/facturacion.html', context)
+
+
+
+
+@login_required
+def exportar_empresas_excel(request):
+    """Exportar listado de empresas a Excel"""
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment
+    
+    # Crear libro de trabajo
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = 'Empresas'
+    
+    # Encabezados con estilo
+    headers = ['ID', 'Nombre', 'RUC', 'Email', 'Teléfono', 'Dirección', 'Plan', 'Activo']
+    ws.append(headers)
+    
+    # Estilo de encabezados
+    header_fill = PatternFill(start_color='4A6785', end_color='4A6785', fill_type='solid')
+    header_font = Font(bold=True, color='FFFFFF', size=12)
+    
+    for cell in ws[1]:
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+    
+    # Datos
+    empresas = EmpresaCliente.objects.all()
+    for empresa in empresas:
+        ws.append([
+            empresa.id,
+            empresa.nombre,
+            empresa.ruc,
+            empresa.email,
+            empresa.telefono,
+            empresa.direccion,
+            empresa.get_plan_display(),
+            'Sí' if empresa.activo else 'No'
+        ])
+    
+    # Ajustar ancho de columnas
+    for column in ws.columns:
+        max_length = 0
+        column_letter = column[0].column_letter
+        for cell in column:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(cell.value)
+            except:
+                pass
+        adjusted_width = min(max_length + 2, 50)
+        ws.column_dimensions[column_letter].width = adjusted_width
+    
+    # Preparar respuesta
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename=empresas_{date.today().strftime("%Y%m%d")}.xlsx'
+    wb.save(response)
+    
+    return response
+
+
+@login_required
+def exportar_reservas_excel(request):
+    """Exportar listado de reservas a Excel"""
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment
+    
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = 'Reservas'
+    
+    # Encabezados
+    headers = ['ID', 'Sala', 'Miembro', 'Empresa', 'Fecha', 'Hora Inicio', 'Hora Fin', 'Propósito', 'Asistentes', 'Costo', 'Estado']
+    ws.append(headers)
+    
+    # Estilo
+    header_fill = PatternFill(start_color='4A6785', end_color='4A6785', fill_type='solid')
+    header_font = Font(bold=True, color='FFFFFF', size=12)
+    
+    for cell in ws[1]:
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+    
+    # Datos
+    reservas = ReservaSala.objects.all().order_by('-fecha')
+    for reserva in reservas:
+        ws.append([
+            reserva.id,
+            reserva.sala.nombre,
+            f'{reserva.miembro.nombre} {reserva.miembro.apellido}',
+            reserva.miembro.empresa.nombre,
+            reserva.fecha.strftime('%d/%m/%Y'),
+            reserva.hora_inicio.strftime('%H:%M'),
+            reserva.hora_fin.strftime('%H:%M'),
+            reserva.proposito,
+            reserva.numero_asistentes,
+            f'${reserva.costo_total}',
+            reserva.get_estado_display()
+        ])
+    
+    # Ajustar columnas
+    for column in ws.columns:
+        max_length = 0
+        column_letter = column[0].column_letter
+        for cell in column:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(cell.value)
+            except:
+                pass
+        adjusted_width = min(max_length + 2, 50)
+        ws.column_dimensions[column_letter].width = adjusted_width
+    
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename=reservas_{date.today().strftime("%Y%m%d")}.xlsx'
+    wb.save(response)
+    
+    return response
+
+
+@login_required
+def exportar_facturas_excel(request):
+    """Exportar listado de facturas a Excel"""
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment
+    
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = 'Facturas'
+    
+    # Encabezados
+    headers = ['Número', 'Empresa', 'Fecha Emisión', 'Fecha Vencimiento', 'Subtotal', 'IVA', 'Total', 'Tipo', 'Estado', 'Notas']
+    ws.append(headers)
+    
+    # Estilo
+    header_fill = PatternFill(start_color='4A6785', end_color='4A6785', fill_type='solid')
+    header_font = Font(bold=True, color='FFFFFF', size=12)
+    
+    for cell in ws[1]:
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+    
+    # Datos
+    facturas = Factura.objects.all().order_by('-fecha_emision')
+    for factura in facturas:
+        ws.append([
+            factura.numero_factura,
+            factura.empresa.nombre,
+            factura.fecha_emision.strftime('%d/%m/%Y'),
+            factura.fecha_vencimiento.strftime('%d/%m/%Y'),
+            f'${factura.subtotal}',
+            f'${factura.iva}',
+            f'${factura.total}',
+            factura.get_tipo_factura_display(),
+            factura.get_estado_display(),
+            factura.notas or 'N/A'
+        ])
+    
+    # Ajustar columnas
+    for column in ws.columns:
+        max_length = 0
+        column_letter = column[0].column_letter
+        for cell in column:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(cell.value)
+            except:
+                pass
+        adjusted_width = min(max_length + 2, 50)
+        ws.column_dimensions[column_letter].width = adjusted_width
+    
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename=facturas_{date.today().strftime("%Y%m%d")}.xlsx'
+    wb.save(response)
+    
+    return response

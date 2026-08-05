@@ -253,6 +253,93 @@ function limpiarValidacion(input) {
 
 // Inicializar validaciones en formularios
 document.addEventListener('DOMContentLoaded', function() {
+    // ==================== VISTA PREVIA DE ARCHIVOS ====================
+    // Vista previa de PDFs e Imágenes en inputs tipo file
+    const inputsFile = document.querySelectorAll('input[type="file"]');
+    inputsFile.forEach(input => {
+        input.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const maxSize = 5 * 1024 * 1024; // 5MB
+            if (file.size > maxSize) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Archivo muy grande',
+                    text: 'El archivo no debe superar 5MB',
+                    confirmButtonColor: '#4A6785'
+                });
+                this.value = '';
+                return;
+            }
+            
+            // Crear contenedor de vista previa si no existe
+            let previewContainer = this.parentElement.querySelector('.file-preview-container');
+            if (!previewContainer) {
+                previewContainer = document.createElement('div');
+                previewContainer.className = 'file-preview-container mt-3';
+                this.parentElement.appendChild(previewContainer);
+            }
+            
+            // Limpiar vista previa anterior
+            previewContainer.innerHTML = '';
+            
+            const fileType = file.type;
+            const fileName = file.name;
+            const fileSize = (file.size / 1024).toFixed(2) + ' KB';
+            
+            if (fileType === 'application/pdf') {
+                // Vista previa de PDF
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewContainer.innerHTML = `
+                        <div class="card border-danger">
+                            <div class="card-header bg-danger text-white">
+                                <i class="fa fa-file-pdf"></i> Vista Previa PDF
+                            </div>
+                            <div class="card-body">
+                                <embed src="${e.target.result}" type="application/pdf" width="100%" height="400px" />
+                                <div class="mt-2">
+                                    <strong>Archivo:</strong> ${fileName}<br>
+                                    <strong>Tamaño:</strong> ${fileSize}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                };
+                reader.readAsDataURL(file);
+            } else if (fileType.startsWith('image/')) {
+                // Vista previa de Imagen
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewContainer.innerHTML = `
+                        <div class="card border-primary">
+                            <div class="card-header bg-primary text-white">
+                                <i class="fa fa-image"></i> Vista Previa Imagen
+                            </div>
+                            <div class="card-body text-center">
+                                <img src="${e.target.result}" class="img-fluid rounded shadow-sm" 
+                                     style="max-height: 400px;" alt="Vista previa">
+                                <div class="mt-2">
+                                    <strong>Archivo:</strong> ${fileName}<br>
+                                    <strong>Tamaño:</strong> ${fileSize}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                // Otros archivos
+                previewContainer.innerHTML = `
+                    <div class="alert alert-info">
+                        <i class="fa fa-file"></i> <strong>${fileName}</strong> (${fileSize})
+                    </div>
+                `;
+            }
+        });
+    });
+    
     // Validar Cédulas
     const inputsCedula = document.querySelectorAll('input[name="cedula"]');
     inputsCedula.forEach(input => {

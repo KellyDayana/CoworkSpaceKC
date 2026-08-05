@@ -87,4 +87,9 @@ urlpatterns = [
     path('reportes/', views.reportes, name='reportes'),
     path('reportes/ocupacion/', views.reporte_ocupacion, name='reporte_ocupacion'),
     path('reportes/facturacion/', views.reporte_facturacion, name='reporte_facturacion'),
+    
+    # Exportaciones a Excel
+    path('exportar/empresas/', views.exportar_empresas_excel, name='exportar_empresas_excel'),
+    path('exportar/reservas/', views.exportar_reservas_excel, name='exportar_reservas_excel'),
+    path('exportar/facturas/', views.exportar_facturas_excel, name='exportar_facturas_excel'),
 ]
