@@ -62,6 +62,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'cloudinary_storage',
+    'cloudinary',
     'reservas',
 ]
 
@@ -215,3 +217,31 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # Email predeterminado del sistema
 DEFAULT_FROM_EMAIL = 'CoworkSpace KC <noreply@coworkspacekc.com>'
+
+
+# ==================== CONFIGURACIÓN DE CLOUDINARY ====================
+# Configuración para almacenar archivos de media en Cloudinary (producción)
+
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME', 'ub7uycnk'),
+    'API_KEY': os.environ.get('CLOUDINARY_API_KEY', '687431843646848'),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET', 'w3OuV-l3MI6cci9hNU08-3V9h3s'),
+}
+
+cloudinary.config(
+    cloud_name=CLOUDINARY_STORAGE['CLOUD_NAME'],
+    api_key=CLOUDINARY_STORAGE['API_KEY'],
+    api_secret=CLOUDINARY_STORAGE['API_SECRET'],
+    secure=True
+)
+
+# En producción, usar Cloudinary para archivos media
+if not DEBUG:
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+# En desarrollo local, usar almacenamiento normal
+else:
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
