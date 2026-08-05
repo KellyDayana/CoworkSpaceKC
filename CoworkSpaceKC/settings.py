@@ -101,43 +101,43 @@ WSGI_APPLICATION = 'CoworkSpaceKC.wsgi.application'
 
 import os
 
-# Configuración para PostgreSQL
-# Prioriza DATABASE_URL (Railway, Render, Heroku), luego variables individuales, luego valores locales
+# Configuración de Base de Datos
+# - Si existe DATABASE_URL (Render, Heroku, etc.) → usa PostgreSQL
+# - Si NO existe DATABASE_URL → usa SQLite (desarrollo local)
 
-# Intentar importar dj_database_url (para Railway/Render)
-try:
-    import dj_database_url
-    DATABASES = {
-        'default': dj_database_url.config(
-            default=f"postgresql://{os.environ.get('DB_USER', 'postgres')}:"
-                    f"{os.environ.get('DB_PASSWORD', 'postgres')}@"
-                    f"{os.environ.get('DB_HOST', 'localhost')}:"
-                    f"{os.environ.get('DB_PORT', '5432')}/"
-                    f"{os.environ.get('DB_NAME', 'coworkspace_kc')}",
-            conn_max_age=600,
-            conn_health_checks=True,
-        )
-    }
-except ImportError:
-    # Si no está dj_database_url, usar configuración manual
+database_url = os.environ.get('DATABASE_URL')
+
+if database_url:
+    # Producción: PostgreSQL con DATABASE_URL
+    try:
+        import dj_database_url
+        DATABASES = {
+            'default': dj_database_url.config(
+                default=database_url,
+                conn_max_age=600,
+                conn_health_checks=True,
+            )
+        }
+    except ImportError:
+        # Fallback manual si dj_database_url no está instalado
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': os.environ.get('DB_NAME', 'coworkspace_kc'),
+                'USER': os.environ.get('DB_USER', 'postgres'),
+                'PASSWORD': os.environ.get('DB_PASSWORD', 'postgres'),
+                'HOST': os.environ.get('DB_HOST', 'localhost'),
+                'PORT': os.environ.get('DB_PORT', '5432'),
+            }
+        }
+else:
+    # Desarrollo Local: SQLite
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.environ.get('DB_NAME', 'coworkspace_kc'),
-            'USER': os.environ.get('DB_USER', 'postgres'),
-            'PASSWORD': os.environ.get('DB_PASSWORD', 'postgres'),
-            'HOST': os.environ.get('DB_HOST', 'localhost'),
-            'PORT': os.environ.get('DB_PORT', '5432'),
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'coworkspace_kc.db'),
         }
     }
-
-# Si prefieres usar SQLite para desarrollo local, descomenta esto:
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': 'coworkspace_kc.db',
-#     }
-# }
 
 
 # Password validation

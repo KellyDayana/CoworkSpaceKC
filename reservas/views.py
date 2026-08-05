@@ -128,23 +128,17 @@ Equipo CoworkSpace KC
 
 # ==================== INICIO Y DASHBOARD ====================
 
-@login_required
 def inicio(request):
-    # Estadísticas rápidas para el inicio
+    # Vista pública del inicio (no requiere login)
+    # Estadísticas básicas para mostrar
     total_empresas = EmpresaCliente.objects.filter(activo=True).count()
-    total_miembros = Miembro.objects.filter(activo=True).count()
     total_salas = SalaReunion.objects.filter(activo=True).count()
-    total_escritorios = EscritorioDedicado.objects.count()
-    escritorios_ocupados = EscritorioDedicado.objects.filter(estado='ocupado').count()
-    reservas_hoy = ReservaSala.objects.filter(fecha=date.today()).count()
+    total_eventos = Evento.objects.filter(publico=True).count()
     
     context = {
         'total_empresas': total_empresas,
-        'total_miembros': total_miembros,
         'total_salas': total_salas,
-        'total_escritorios': total_escritorios,
-        'escritorios_ocupados': escritorios_ocupados,
-        'reservas_hoy': reservas_hoy,
+        'total_eventos': total_eventos,
     }
     return render(request, 'base/inicio.html', context)
 
@@ -376,9 +370,8 @@ def eliminar_miembro(request, id):
 
 # ==================== CRUD SALAS DE REUNIÓN ====================
 
-@login_required
 def sala_lista(request):
-    # Todos pueden ver las salas
+    # Vista pública - Todos pueden ver las salas disponibles
     salas = SalaReunion.objects.all()
     return render(request, 'salas/listado.html', {'salas': salas})
 
@@ -780,8 +773,8 @@ def eliminar_reserva(request, id):
 
 # ==================== CRUD EVENTOS ====================
 
-@login_required
 def evento_lista(request):
+    # Vista pública - Todos pueden ver los eventos (especialmente los públicos)
     eventos = Evento.objects.all().order_by('-fecha_evento')
     return render(request, 'eventos/listado.html', {'eventos': eventos})
 
