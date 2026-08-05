@@ -1,13 +1,35 @@
 # Migración para cambiar de posicion_x/posicion_y a posicion única
-from django.db import migrations, models
+from django.db import migrations, models, connection
 
 
-def migrar_posiciones(apps, schema_editor):
-    """Copiar posicion_x a posicion"""
-    EscritorioDedicado = apps.get_model('reservas', 'EscritorioDedicado')
-    for escritorio in EscritorioDedicado.objects.all():
-        escritorio.posicion = escritorio.posicion_x
-        escritorio.save()
+def verificar_y_migrar_posiciones(apps, schema_editor):
+    """Copiar posicion_x a posicion si posicion_x existe"""
+    # Verificar si posicion_x existe
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name='reservas_escritoriodedicado' 
+            AND column_name='posicion_x'
+        """)
+        posicion_x_existe = cursor.fetchone() is not None
+    
+    if posicion_x_existe:
+        EscritorioDedicado = apps.get_model('reservas', 'EscritorioDedicado')
+        for escritorio in EscritorioDedicado.objects.all():
+            escritorio.posicion = escritorio.posicion_x
+            escritorio.save()
+
+
+def verificar_columna_existe(tabla, columna):
+    """Verifica si una columna existe en una tabla"""
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name=%s AND column_name=%s
+        """, [tabla, columna])
+        return cursor.fetchone() is not None
 
 
 class Migration(migrations.Migration):
@@ -17,36 +39,75 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        # 1. Agregar el nuevo campo posicion
-        migrations.AddField(
-            model_name='escritoriodedicado',
-            name='posicion',
-            field=models.PositiveIntegerField(default=1),
+        # 1. Agregar el nuevo campo posicion solo si no existe
+        migrations.RunSQL(
+            sql="""
+                DO $$ 
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns 
+                        WHERE table_name='reservas_escritoriodedicado' AND column_name='posicion'
+                    ) THEN
+                        ALTER TABLE reservas_escritoriodedicado ADD COLUMN posicion integer DEFAULT 1 NOT NULL;
+                    END IF;
+                END $$;
+            """,
+            reverse_sql=migrations.RunSQL.noop,
         ),
-        # 2. Copiar datos de posicion_x a posicion
-        migrations.RunPython(migrar_posiciones, reverse_code=migrations.RunPython.noop),
-        # 3. Eliminar el constraint antiguo
-        migrations.AlterUniqueTogether(
-            name='escritoriodedicado',
-            unique_together=set(),
+        # 2. Copiar datos de posicion_x a posicion si existe posicion_x
+        migrations.RunPython(verificar_y_migrar_posiciones, reverse_code=migrations.RunPython.noop),
+        # 3. Eliminar el constraint antiguo si existe
+        migrations.RunSQL(
+            sql="""
+                DO $$ 
+                BEGIN
+                    IF EXISTS (
+                        SELECT 1 FROM pg_constraint 
+                        WHERE conname='reservas_escritoriod_piso_posicion_x_posic_7a9fe5a4_uniq'
+                    ) THEN
+                        ALTER TABLE reservas_escritoriodedicado 
+                        DROP CONSTRAINT reservas_escritoriod_piso_posicion_x_posic_7a9fe5a4_uniq;
+                    END IF;
+                END $$;
+            """,
+            reverse_sql=migrations.RunSQL.noop,
         ),
-        # 4. Eliminar campos antiguos
-        migrations.RemoveField(
-            model_name='escritoriodedicado',
-            name='posicion_x',
+        # 4. Eliminar campos antiguos si existen
+        migrations.RunSQL(
+            sql="""
+                DO $$ 
+                BEGIN
+                    IF EXISTS (
+                        SELECT 1 FROM information_schema.columns 
+                        WHERE table_name='reservas_escritoriodedicado' AND column_name='posicion_x'
+                    ) THEN
+                        ALTER TABLE reservas_escritoriodedicado DROP COLUMN posicion_x;
+                    END IF;
+                    IF EXISTS (
+                        SELECT 1 FROM information_schema.columns 
+                        WHERE table_name='reservas_escritoriodedicado' AND column_name='posicion_y'
+                    ) THEN
+                        ALTER TABLE reservas_escritoriodedicado DROP COLUMN posicion_y;
+                    END IF;
+                END $$;
+            """,
+            reverse_sql=migrations.RunSQL.noop,
         ),
-        migrations.RemoveField(
-            model_name='escritoriodedicado',
-            name='posicion_y',
-        ),
-        # 5. Agregar el nuevo constraint
-        migrations.AlterUniqueTogether(
-            name='escritoriodedicado',
-            unique_together={('piso', 'posicion')},
-        ),
-        # 6. Agregar Meta options
-        migrations.AlterModelOptions(
-            name='escritoriodedicado',
-            options={'ordering': ['piso', 'posicion']},
+        # 5. Agregar el nuevo constraint si no existe
+        migrations.RunSQL(
+            sql="""
+                DO $$ 
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 FROM pg_constraint 
+                        WHERE conname='reservas_escritoriod_piso_posicion_uniq'
+                    ) THEN
+                        ALTER TABLE reservas_escritoriodedicado 
+                        ADD CONSTRAINT reservas_escritoriod_piso_posicion_uniq 
+                        UNIQUE (piso, posicion);
+                    END IF;
+                END $$;
+            """,
+            reverse_sql=migrations.RunSQL.noop,
         ),
     ]
