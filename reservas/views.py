@@ -737,16 +737,46 @@ def guardar_reserva(request):
         sala = get_object_or_404(SalaReunion, id=request.POST['sala'])
         miembro = get_object_or_404(Miembro, id=request.POST['miembro'])
         
-        # Calcular costo total (diferencia de horas * precio por hora)
+        # Obtener fecha y horas
+        fecha = request.POST['fecha']
         hora_inicio = datetime.strptime(request.POST['hora_inicio'], '%H:%M').time()
         hora_fin = datetime.strptime(request.POST['hora_fin'], '%H:%M').time()
+        
+        # Validar que hora_fin sea mayor que hora_inicio
+        if hora_fin <= hora_inicio:
+            messages.error(request, 'La hora de fin debe ser mayor que la hora de inicio.')
+            return redirect('nueva_reserva')
+        
+        # VALIDACIÓN: Verificar si ya existe una reserva que se solapa en el mismo día y sala
+        reservas_existentes = ReservaSala.objects.filter(
+            sala=sala,
+            fecha=fecha,
+            estado__in=['confirmada', 'pendiente']  # Solo validar reservas activas
+        )
+        
+        for reserva in reservas_existentes:
+            # Verificar solapamiento de horarios
+            # Hay solapamiento si:
+            # - La nueva hora_inicio está entre hora_inicio y hora_fin de la reserva existente
+            # - La nueva hora_fin está entre hora_inicio y hora_fin de la reserva existente
+            # - La nueva reserva envuelve completamente a la existente
+            if (reserva.hora_inicio <= hora_inicio < reserva.hora_fin) or \
+               (reserva.hora_inicio < hora_fin <= reserva.hora_fin) or \
+               (hora_inicio <= reserva.hora_inicio and hora_fin >= reserva.hora_fin):
+                messages.error(request, 
+                    f'La sala ya está reservada en ese horario. '
+                    f'Reserva existente: {reserva.hora_inicio.strftime("%H:%M")} - {reserva.hora_fin.strftime("%H:%M")} '
+                    f'por {reserva.miembro.nombre} {reserva.miembro.apellido}')
+                return redirect('nueva_reserva')
+        
+        # Calcular costo total (diferencia de horas * precio por hora)
         horas = (datetime.combine(date.today(), hora_fin) - datetime.combine(date.today(), hora_inicio)).seconds / 3600
         costo_total = Decimal(horas) * sala.precio_hora
         
         ReservaSala.objects.create(
             sala=sala,
             miembro=miembro,
-            fecha=request.POST['fecha'],
+            fecha=fecha,
             hora_inicio=request.POST['hora_inicio'],
             hora_fin=request.POST['hora_fin'],
             proposito=request.POST['proposito'],
@@ -773,9 +803,35 @@ def procesar_edicion_reserva(request):
         sala = get_object_or_404(SalaReunion, id=request.POST['sala'])
         miembro = get_object_or_404(Miembro, id=request.POST['miembro'])
         
-        # Recalcular costo
+        # Obtener fecha y horas
+        fecha = request.POST['fecha']
         hora_inicio = datetime.strptime(request.POST['hora_inicio'], '%H:%M').time()
         hora_fin = datetime.strptime(request.POST['hora_fin'], '%H:%M').time()
+        
+        # Validar que hora_fin sea mayor que hora_inicio
+        if hora_fin <= hora_inicio:
+            messages.error(request, 'La hora de fin debe ser mayor que la hora de inicio.')
+            return redirect('editar_reserva', id=reserva.id)
+        
+        # VALIDACIÓN: Verificar si ya existe una reserva que se solapa (excluyendo la reserva actual)
+        reservas_existentes = ReservaSala.objects.filter(
+            sala=sala,
+            fecha=fecha,
+            estado__in=['confirmada', 'pendiente']
+        ).exclude(id=reserva.id)  # Excluir la reserva actual
+        
+        for reserva_existente in reservas_existentes:
+            # Verificar solapamiento de horarios
+            if (reserva_existente.hora_inicio <= hora_inicio < reserva_existente.hora_fin) or \
+               (reserva_existente.hora_inicio < hora_fin <= reserva_existente.hora_fin) or \
+               (hora_inicio <= reserva_existente.hora_inicio and hora_fin >= reserva_existente.hora_fin):
+                messages.error(request, 
+                    f'La sala ya está reservada en ese horario. '
+                    f'Reserva existente: {reserva_existente.hora_inicio.strftime("%H:%M")} - {reserva_existente.hora_fin.strftime("%H:%M")} '
+                    f'por {reserva_existente.miembro.nombre} {reserva_existente.miembro.apellido}')
+                return redirect('editar_reserva', id=reserva.id)
+        
+        # Recalcular costo
         horas = (datetime.combine(date.today(), hora_fin) - datetime.combine(date.today(), hora_inicio)).seconds / 3600
         costo_total = Decimal(horas) * sala.precio_hora
         
