@@ -8,12 +8,310 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.http import JsonResponse, HttpResponse
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMultiAlternatives
 from django.conf import settings
+import io
+
+# Importar ReportLab para PDFs
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.units import mm
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER, TA_RIGHT
+
 from .models import (
     EmpresaCliente, Miembro, SalaReunion, EscritorioDedicado,
     ReservaSala, Evento, Factura
 )
+
+
+# ==================== FUNCIONES DE GENERACIÓN DE PDFs ====================
+
+def _generar_pdf_factura(factura):
+    """Genera PDF de factura y devuelve los bytes"""
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer, pagesize=letter,
+        topMargin=20 * mm, bottomMargin=20 * mm,
+        leftMargin=20 * mm, rightMargin=20 * mm,
+    )
+    styles = getSampleStyleSheet()
+    titulo_style = ParagraphStyle(
+        'TituloFactura', parent=styles['Title'], textColor=colors.HexColor('#4A6785'),
+        fontSize=22, alignment=TA_CENTER, spaceAfter=2,
+    )
+    subtitulo_style = ParagraphStyle(
+        'Subtitulo', parent=styles['Normal'], textColor=colors.HexColor('#555555'),
+        fontSize=10, alignment=TA_CENTER, spaceAfter=14,
+    )
+    
+    story = []
+    story.append(Paragraph('CoworkSpace KC', titulo_style))
+    story.append(Paragraph('Plataforma de Reservas para Edificios de Coworking - FACTURA', subtitulo_style))
+    story.append(Paragraph(f'Factura N°: {factura.numero_factura}', ParagraphStyle(
+        'Numero', parent=styles['Normal'], alignment=TA_RIGHT, fontSize=13, 
+        textColor=colors.HexColor('#4A6785'), fontName='Helvetica-Bold', spaceAfter=4
+    )))
+    story.append(Paragraph(
+        f'Fecha: {factura.fecha_emision.strftime("%d/%m/%Y")}',
+        ParagraphStyle('Fecha', parent=styles['Normal'], alignment=TA_RIGHT, fontSize=9, textColor=colors.grey)
+    ))
+    
+    # Datos de la empresa
+    story.append(Spacer(1, 10))
+    story.append(Paragraph('Empresa Cliente', ParagraphStyle(
+        'Seccion', parent=styles['Heading2'], textColor=colors.HexColor('#1F1F1F'),
+        fontSize=12, spaceBefore=14, spaceAfter=6,
+    )))
+    datos_empresa = [
+        ['Empresa:', factura.empresa.nombre],
+        ['RUC:', factura.empresa.ruc],
+        ['Email:', factura.empresa.email],
+        ['Teléfono:', factura.empresa.telefono],
+        ['Dirección:', factura.empresa.direccion],
+    ]
+    tabla_empresa = Table(datos_empresa, colWidths=[35 * mm, 130 * mm])
+    tabla_empresa.setStyle(TableStyle([
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9.5),
+        ('TEXTCOLOR', (0, 0), (0, -1), colors.HexColor('#888888')),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+    ]))
+    story.append(tabla_empresa)
+    
+    # Detalle de la factura
+    story.append(Spacer(1, 10))
+    story.append(Paragraph('Detalle de Facturación', ParagraphStyle(
+        'Seccion', parent=styles['Heading2'], textColor=colors.HexColor('#1F1F1F'),
+        fontSize=12, spaceBefore=14, spaceAfter=6,
+    )))
+    datos_factura = [
+        ['Tipo:', factura.get_tipo_factura_display()],
+        ['Estado:', factura.get_estado_display()],
+        ['Subtotal:', f'${factura.subtotal}'],
+        ['IVA (15%):', f'${factura.iva}'],
+        ['Notas:', factura.notas or 'N/A'],
+    ]
+    tabla_factura = Table(datos_factura, colWidths=[35 * mm, 130 * mm])
+    tabla_factura.setStyle(TableStyle([
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9.5),
+        ('TEXTCOLOR', (0, 0), (0, -1), colors.HexColor('#888888')),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+    ]))
+    story.append(tabla_factura)
+    
+    # Total
+    story.append(Spacer(1, 14))
+    tabla_total = Table([['TOTAL', f'${factura.total}']], colWidths=[135 * mm, 30 * mm])
+    tabla_total.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#4A6785')),
+        ('TEXTCOLOR', (0, 0), (-1, -1), colors.white),
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 11),
+        ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
+        ('TOPPADDING', (0, 0), (-1, -1), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+    ]))
+    story.append(tabla_total)
+    
+    story.append(Spacer(1, 30))
+    story.append(Paragraph(
+        'CoworkSpace KC &middot; info@coworkspacekc.com',
+        ParagraphStyle('Footer', parent=styles['Normal'], alignment=TA_CENTER, fontSize=8, textColor=colors.grey)
+    ))
+    
+    doc.build(story)
+    buffer.seek(0)
+    return buffer.getvalue()
+
+
+def _generar_pdf_reserva(reserva):
+    """Genera PDF de confirmación de reserva de sala y devuelve los bytes"""
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer, pagesize=letter,
+        topMargin=20 * mm, bottomMargin=20 * mm,
+        leftMargin=20 * mm, rightMargin=20 * mm,
+    )
+    styles = getSampleStyleSheet()
+    titulo_style = ParagraphStyle(
+        'Titulo', parent=styles['Title'], textColor=colors.HexColor('#4A6785'),
+        fontSize=22, alignment=TA_CENTER, spaceAfter=2,
+    )
+    
+    story = []
+    story.append(Paragraph('CoworkSpace KC', titulo_style))
+    story.append(Paragraph('CONFIRMACIÓN DE RESERVA DE SALA', ParagraphStyle(
+        'Subtitulo', parent=styles['Normal'], textColor=colors.HexColor('#555555'),
+        fontSize=10, alignment=TA_CENTER, spaceAfter=14,
+    )))
+    
+    # Datos de la reserva
+    datos = [
+        ['Sala:', reserva.sala.nombre],
+        ['Miembro:', f'{reserva.miembro.nombre} {reserva.miembro.apellido}'],
+        ['Empresa:', reserva.miembro.empresa.nombre],
+        ['Fecha:', reserva.fecha.strftime('%d/%m/%Y')],
+        ['Hora Inicio:', reserva.hora_inicio.strftime('%H:%M')],
+        ['Hora Fin:', reserva.hora_fin.strftime('%H:%M')],
+        ['Propósito:', reserva.proposito],
+        ['Asistentes:', str(reserva.numero_asistentes)],
+        ['Estado:', reserva.get_estado_display()],
+        ['Costo Total:', f'${reserva.costo_total}'],
+    ]
+    tabla = Table(datos, colWidths=[40 * mm, 125 * mm])
+    tabla.setStyle(TableStyle([
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('TEXTCOLOR', (0, 0), (0, -1), colors.HexColor('#888888')),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+    ]))
+    story.append(tabla)
+    
+    story.append(Spacer(1, 30))
+    story.append(Paragraph(
+        'Gracias por usar CoworkSpace KC',
+        ParagraphStyle('Footer', parent=styles['Normal'], alignment=TA_CENTER, fontSize=8, textColor=colors.grey)
+    ))
+    
+    doc.build(story)
+    buffer.seek(0)
+    return buffer.getvalue()
+
+
+def _generar_pdf_evento(evento):
+    """Genera PDF de confirmación de evento y devuelve los bytes"""
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer, pagesize=letter,
+        topMargin=20 * mm, bottomMargin=20 * mm,
+        leftMargin=20 * mm, rightMargin=20 * mm,
+    )
+    styles = getSampleStyleSheet()
+    titulo_style = ParagraphStyle(
+        'Titulo', parent=styles['Title'], textColor=colors.HexColor('#4A6785'),
+        fontSize=22, alignment=TA_CENTER, spaceAfter=2,
+    )
+    
+    story = []
+    story.append(Paragraph('CoworkSpace KC', titulo_style))
+    story.append(Paragraph('CONFIRMACIÓN DE EVENTO', ParagraphStyle(
+        'Subtitulo', parent=styles['Normal'], textColor=colors.HexColor('#555555'),
+        fontSize=10, alignment=TA_CENTER, spaceAfter=14,
+    )))
+    
+    # Datos del evento
+    datos = [
+        ['Título:', evento.titulo],
+        ['Descripción:', evento.descripcion],
+        ['Organizador:', evento.organizador.nombre],
+        ['Fecha:', evento.fecha_evento.strftime('%d/%m/%Y')],
+        ['Hora Inicio:', evento.hora_inicio.strftime('%H:%M')],
+        ['Hora Fin:', evento.hora_fin.strftime('%H:%M')],
+        ['Sala:', evento.sala.nombre if evento.sala else 'Sin sala asignada'],
+        ['Tipo:', evento.get_tipo_evento_display()],
+        ['Capacidad Máxima:', str(evento.capacidad_maxima)],
+        ['Público:', 'Sí' if evento.publico else 'No'],
+    ]
+    tabla = Table(datos, colWidths=[40 * mm, 125 * mm])
+    tabla.setStyle(TableStyle([
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('TEXTCOLOR', (0, 0), (0, -1), colors.HexColor('#888888')),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+    ]))
+    story.append(tabla)
+    
+    story.append(Spacer(1, 30))
+    story.append(Paragraph(
+        'Gracias por usar CoworkSpace KC',
+        ParagraphStyle('Footer', parent=styles['Normal'], alignment=TA_CENTER, fontSize=8, textColor=colors.grey)
+    ))
+    
+    doc.build(story)
+    buffer.seek(0)
+    return buffer.getvalue()
+
+
+def _generar_pdf_escritorio(escritorio):
+    """Genera PDF de asignación de escritorio y devuelve los bytes"""
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer, pagesize=letter,
+        topMargin=20 * mm, bottomMargin=20 * mm,
+        leftMargin=20 * mm, rightMargin=20 * mm,
+    )
+    styles = getSampleStyleSheet()
+    titulo_style = ParagraphStyle(
+        'Titulo', parent=styles['Title'], textColor=colors.HexColor('#4A6785'),
+        fontSize=22, alignment=TA_CENTER, spaceAfter=2,
+    )
+    
+    story = []
+    story.append(Paragraph('CoworkSpace KC', titulo_style))
+    story.append(Paragraph('ASIGNACIÓN DE ESCRITORIO DEDICADO', ParagraphStyle(
+        'Subtitulo', parent=styles['Normal'], textColor=colors.HexColor('#555555'),
+        fontSize=10, alignment=TA_CENTER, spaceAfter=14,
+    )))
+    
+    # Datos del escritorio
+    datos = [
+        ['Código:', escritorio.codigo],
+        ['Piso:', str(escritorio.piso)],
+        ['Posición:', str(escritorio.posicion)],
+        ['Tipo:', escritorio.get_tipo_display()],
+        ['Estado:', escritorio.get_estado_display()],
+        ['Precio Mensual:', f'${escritorio.precio_mensual}'],
+    ]
+    
+    if escritorio.miembro_asignado:
+        datos.extend([
+            ['Miembro Asignado:', f'{escritorio.miembro_asignado.nombre} {escritorio.miembro_asignado.apellido}'],
+            ['Empresa:', escritorio.miembro_asignado.empresa.nombre],
+            ['Email:', escritorio.miembro_asignado.email],
+        ])
+    
+    tabla = Table(datos, colWidths=[45 * mm, 120 * mm])
+    tabla.setStyle(TableStyle([
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('TEXTCOLOR', (0, 0), (0, -1), colors.HexColor('#888888')),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+    ]))
+    story.append(tabla)
+    
+    story.append(Spacer(1, 30))
+    story.append(Paragraph(
+        'Gracias por usar CoworkSpace KC',
+        ParagraphStyle('Footer', parent=styles['Normal'], alignment=TA_CENTER, fontSize=8, textColor=colors.grey)
+    ))
+    
+    doc.build(story)
+    buffer.seek(0)
+    return buffer.getvalue()
+
+
+def _enviar_email_con_pdf(destinatario, asunto, mensaje_texto, mensaje_html, pdf_bytes, nombre_archivo):
+    """Función genérica para enviar email con PDF adjunto"""
+    try:
+        email = EmailMultiAlternatives(
+            subject=asunto,
+            body=mensaje_texto,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[destinatario]
+        )
+        email.attach_alternative(mensaje_html, 'text/html')
+        email.attach(nombre_archivo, pdf_bytes, 'application/pdf')
+        email.send(fail_silently=True)
+        return True
+    except Exception as e:
+        print(f'Error enviando email: {e}')
+        return False
 
 
 # ==================== AUTENTICACIÓN ====================
@@ -582,6 +880,8 @@ def procesar_edicion_escritorio(request):
     
     if request.method == 'POST':
         escritorio = get_object_or_404(EscritorioDedicado, id=request.POST['id'])
+        miembro_anterior = escritorio.miembro_asignado  # Guardar miembro anterior
+        
         escritorio.codigo = request.POST['codigo']
         escritorio.piso = int(request.POST['piso'])
         escritorio.precio_mensual = request.POST['precio_mensual']
@@ -592,10 +892,66 @@ def procesar_edicion_escritorio(request):
         # Mantener posiciones actuales
         
         miembro_id = request.POST.get('miembro_asignado')
-        escritorio.miembro_asignado = Miembro.objects.get(id=miembro_id) if miembro_id else None
+        miembro_nuevo = Miembro.objects.get(id=miembro_id) if miembro_id else None
+        escritorio.miembro_asignado = miembro_nuevo
         
         escritorio.save()
-        messages.success(request, 'Escritorio actualizado correctamente.')
+        
+        # Si se asignó un nuevo miembro (y no era el mismo), enviar PDF
+        if miembro_nuevo and miembro_nuevo != miembro_anterior:
+            try:
+                pdf_bytes = _generar_pdf_escritorio(escritorio)
+                asunto = f'CoworkSpace KC - Escritorio Asignado: {escritorio.codigo}'
+                mensaje_texto = f'''Hola {miembro_nuevo.nombre} {miembro_nuevo.apellido},
+
+Se te ha asignado un escritorio dedicado.
+
+Detalle:
+- Código: {escritorio.codigo}
+- Piso: {escritorio.piso}
+- Posición: {escritorio.posicion}
+- Tipo: {escritorio.get_tipo_display()}
+- Precio Mensual: ${escritorio.precio_mensual}
+
+Adjunto encontrarás los detalles en PDF.
+
+Saludos,
+CoworkSpace KC
+'''
+                mensaje_html = f'''<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;border:1px solid #eee;border-radius:8px;">
+<div style="background:#4A6785;padding:28px;text-align:center;">
+<h1 style="color:#fff;margin:0;font-size:26px;">CoworkSpace KC</h1>
+<p style="color:rgba(255,255,255,.85);margin:6px 0 0;">Escritorio Asignado</p>
+</div>
+<div style="padding:32px;">
+<h2 style="color:#1F1F1F;">¡Escritorio Dedicado Asignado!</h2>
+<p>Hola <strong>{miembro_nuevo.nombre} {miembro_nuevo.apellido}</strong>,</p>
+<div style="background:#f9f9f9;border-radius:8px;padding:20px;margin:20px 0;">
+<table style="width:100%;">
+<tr><td style="padding:6px 0;color:#888;">Código:</td><td style="font-weight:bold;">{escritorio.codigo}</td></tr>
+<tr><td style="padding:6px 0;color:#888;">Ubicación:</td><td>Piso {escritorio.piso}, Posición {escritorio.posicion}</td></tr>
+<tr><td style="padding:6px 0;color:#888;">Tipo:</td><td>{escritorio.get_tipo_display()}</td></tr>
+<tr><td style="padding:6px 0;color:#888;">Precio:</td><td style="font-weight:bold;color:#4A6785;">${escritorio.precio_mensual}/mes</td></tr>
+</table>
+</div>
+<p style="color:#777;font-size:13px;text-align:center;border-top:1px solid #eee;padding-top:20px;">CoworkSpace KC</p>
+</div>
+</div>'''
+                _enviar_email_con_pdf(
+                    miembro_nuevo.email,
+                    asunto,
+                    mensaje_texto,
+                    mensaje_html,
+                    pdf_bytes,
+                    f'Escritorio_{escritorio.codigo}.pdf'
+                )
+                messages.success(request, f'Escritorio asignado y confirmación enviada a {miembro_nuevo.email}')
+            except Exception as e:
+                print(f'Error generando/enviando PDF: {e}')
+                messages.success(request, 'Escritorio actualizado correctamente.')
+        else:
+            messages.success(request, 'Escritorio actualizado correctamente.')
+        
         return redirect('escritorio_lista')
 
 
@@ -773,7 +1129,7 @@ def guardar_reserva(request):
         horas = (datetime.combine(date.today(), hora_fin) - datetime.combine(date.today(), hora_inicio)).seconds / 3600
         costo_total = Decimal(horas) * sala.precio_hora
         
-        ReservaSala.objects.create(
+        reserva = ReservaSala.objects.create(
             sala=sala,
             miembro=miembro,
             fecha=fecha,
@@ -784,7 +1140,60 @@ def guardar_reserva(request):
             estado=request.POST.get('estado', 'confirmada'),
             costo_total=costo_total
         )
-        messages.success(request, 'Reserva guardada correctamente.')
+        
+        # Generar y enviar PDF por correo
+        try:
+            pdf_bytes = _generar_pdf_reserva(reserva)
+            asunto = f'CoworkSpace KC - Reserva Confirmada: {sala.nombre}'
+            mensaje_texto = f'''Hola {miembro.nombre} {miembro.apellido},
+
+Tu reserva ha sido confirmada exitosamente.
+
+Detalle:
+- Sala: {sala.nombre}
+- Fecha: {reserva.fecha.strftime("%d/%m/%Y")}
+- Hora: {reserva.hora_inicio.strftime("%H:%M")} - {reserva.hora_fin.strftime("%H:%M")}
+- Propósito: {reserva.proposito}
+- Asistentes: {reserva.numero_asistentes}
+- Costo: ${reserva.costo_total}
+
+Adjunto encontrarás la confirmación en PDF.
+
+Saludos,
+CoworkSpace KC
+'''
+            mensaje_html = f'''<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;border:1px solid #eee;border-radius:8px;">
+<div style="background:#4A6785;padding:28px;text-align:center;">
+<h1 style="color:#fff;margin:0;font-size:26px;">CoworkSpace KC</h1>
+<p style="color:rgba(255,255,255,.85);margin:6px 0 0;">Reserva Confirmada</p>
+</div>
+<div style="padding:32px;">
+<h2 style="color:#1F1F1F;">¡Reserva Exitosa!</h2>
+<p>Hola <strong>{miembro.nombre} {miembro.apellido}</strong>,</p>
+<div style="background:#f9f9f9;border-radius:8px;padding:20px;margin:20px 0;">
+<table style="width:100%;">
+<tr><td style="padding:6px 0;color:#888;">Sala:</td><td style="font-weight:bold;">{sala.nombre}</td></tr>
+<tr><td style="padding:6px 0;color:#888;">Fecha:</td><td>{reserva.fecha.strftime("%d/%m/%Y")}</td></tr>
+<tr><td style="padding:6px 0;color:#888;">Hora:</td><td>{reserva.hora_inicio.strftime("%H:%M")} - {reserva.hora_fin.strftime("%H:%M")}</td></tr>
+<tr><td style="padding:6px 0;color:#888;">Costo:</td><td style="font-weight:bold;color:#4A6785;">${reserva.costo_total}</td></tr>
+</table>
+</div>
+<p style="color:#777;font-size:13px;text-align:center;border-top:1px solid #eee;padding-top:20px;">CoworkSpace KC</p>
+</div>
+</div>'''
+            _enviar_email_con_pdf(
+                miembro.email,
+                asunto,
+                mensaje_texto,
+                mensaje_html,
+                pdf_bytes,
+                f'Reserva_{sala.nombre}_{reserva.fecha.strftime("%Y%m%d")}.pdf'
+            )
+            messages.success(request, f'Reserva confirmada y enviada a {miembro.email}')
+        except Exception as e:
+            print(f'Error generando/enviando PDF: {e}')
+            messages.success(request, 'Reserva guardada correctamente.')
+        
         return redirect('reserva_lista')
 
 
@@ -926,7 +1335,7 @@ def guardar_evento(request):
                         f'por {reserva.miembro.nombre} {reserva.miembro.apellido}')
                     return redirect('nuevo_evento')
         
-        Evento.objects.create(
+        evento = Evento.objects.create(
             titulo=request.POST['titulo'],
             descripcion=request.POST['descripcion'],
             organizador=organizador,
@@ -939,7 +1348,61 @@ def guardar_evento(request):
             publico='publico' in request.POST,
             foto=request.FILES.get('foto')
         )
-        messages.success(request, 'Evento guardado correctamente.')
+        
+        # Generar y enviar PDF por correo
+        try:
+            pdf_bytes = _generar_pdf_evento(evento)
+            asunto = f'CoworkSpace KC - Evento Registrado: {evento.titulo}'
+            mensaje_texto = f'''Hola {organizador.nombre},
+
+Tu evento ha sido registrado exitosamente.
+
+Detalle:
+- Título: {evento.titulo}
+- Fecha: {evento.fecha_evento.strftime("%d/%m/%Y")}
+- Hora: {evento.hora_inicio.strftime("%H:%M")} - {evento.hora_fin.strftime("%H:%M")}
+- Sala: {sala.nombre if sala else 'Sin sala asignada'}
+- Tipo: {evento.get_tipo_evento_display()}
+- Capacidad: {evento.capacidad_maxima} personas
+
+Adjunto encontrarás la confirmación en PDF.
+
+Saludos,
+CoworkSpace KC
+'''
+            mensaje_html = f'''<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;border:1px solid #eee;border-radius:8px;">
+<div style="background:#4A6785;padding:28px;text-align:center;">
+<h1 style="color:#fff;margin:0;font-size:26px;">CoworkSpace KC</h1>
+<p style="color:rgba(255,255,255,.85);margin:6px 0 0;">Evento Registrado</p>
+</div>
+<div style="padding:32px;">
+<h2 style="color:#1F1F1F;">¡Evento Confirmado!</h2>
+<p>Hola <strong>{organizador.nombre}</strong>,</p>
+<div style="background:#f9f9f9;border-radius:8px;padding:20px;margin:20px 0;">
+<table style="width:100%;">
+<tr><td style="padding:6px 0;color:#888;">Evento:</td><td style="font-weight:bold;">{evento.titulo}</td></tr>
+<tr><td style="padding:6px 0;color:#888;">Fecha:</td><td>{evento.fecha_evento.strftime("%d/%m/%Y")}</td></tr>
+<tr><td style="padding:6px 0;color:#888;">Hora:</td><td>{evento.hora_inicio.strftime("%H:%M")} - {evento.hora_fin.strftime("%H:%M")}</td></tr>
+<tr><td style="padding:6px 0;color:#888;">Sala:</td><td>{sala.nombre if sala else 'Sin sala'}</td></tr>
+<tr><td style="padding:6px 0;color:#888;">Capacidad:</td><td>{evento.capacidad_maxima} personas</td></tr>
+</table>
+</div>
+<p style="color:#777;font-size:13px;text-align:center;border-top:1px solid #eee;padding-top:20px;">CoworkSpace KC</p>
+</div>
+</div>'''
+            _enviar_email_con_pdf(
+                organizador.email,
+                asunto,
+                mensaje_texto,
+                mensaje_html,
+                pdf_bytes,
+                f'Evento_{evento.titulo.replace(" ", "_")}_{evento.fecha_evento.strftime("%Y%m%d")}.pdf'
+            )
+            messages.success(request, f'Evento registrado y confirmación enviada a {organizador.email}')
+        except Exception as e:
+            print(f'Error generando/enviando PDF: {e}')
+            messages.success(request, 'Evento guardado correctamente.')
+        
         return redirect('evento_lista')
 
 
@@ -1059,10 +1522,10 @@ def guardar_factura(request):
     if request.method == 'POST':
         empresa = get_object_or_404(EmpresaCliente, id=request.POST['empresa'])
         subtotal = Decimal(request.POST['subtotal'])
-        iva = subtotal * Decimal('0.12')  # IVA 12%
+        iva = subtotal * Decimal('0.15')  # IVA 15%
         total = subtotal + iva
         
-        Factura.objects.create(
+        factura = Factura.objects.create(
             empresa=empresa,
             fecha_vencimiento=request.POST['fecha_vencimiento'],
             subtotal=subtotal,
@@ -1073,7 +1536,59 @@ def guardar_factura(request):
             notas=request.POST.get('notas', ''),
             pdf=request.FILES.get('pdf')
         )
-        messages.success(request, 'Factura guardada correctamente.')
+        
+        # Generar y enviar PDF por correo
+        try:
+            pdf_bytes = _generar_pdf_factura(factura)
+            asunto = f'CoworkSpace KC - Factura {factura.numero_factura}'
+            mensaje_texto = f'''Hola {empresa.nombre},
+
+Se ha generado la factura {factura.numero_factura} para tu empresa.
+
+Detalle:
+- Subtotal: ${factura.subtotal}
+- IVA (15%): ${factura.iva}
+- Total: ${factura.total}
+- Estado: {factura.get_estado_display()}
+- Fecha de vencimiento: {factura.fecha_vencimiento.strftime("%d/%m/%Y")}
+
+Adjunto encontrarás el PDF de la factura.
+
+Saludos,
+CoworkSpace KC
+'''
+            mensaje_html = f'''<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;border:1px solid #eee;border-radius:8px;">
+<div style="background:#4A6785;padding:28px;text-align:center;">
+<h1 style="color:#fff;margin:0;font-size:26px;">CoworkSpace KC</h1>
+<p style="color:rgba(255,255,255,.85);margin:6px 0 0;">Nueva Factura Generada</p>
+</div>
+<div style="padding:32px;">
+<h2 style="color:#1F1F1F;">Factura {factura.numero_factura}</h2>
+<p>Hola <strong>{empresa.nombre}</strong>,</p>
+<div style="background:#f9f9f9;border-radius:8px;padding:20px;margin:20px 0;">
+<table style="width:100%;">
+<tr><td style="padding:6px 0;color:#888;">Subtotal:</td><td style="font-weight:bold;">${factura.subtotal}</td></tr>
+<tr><td style="padding:6px 0;color:#888;">IVA (15%):</td><td style="font-weight:bold;">${factura.iva}</td></tr>
+<tr><td style="padding:6px 0;color:#888;">Total:</td><td style="font-weight:bold;color:#4A6785;font-size:18px;">${factura.total}</td></tr>
+<tr><td style="padding:6px 0;color:#888;">Vencimiento:</td><td>{factura.fecha_vencimiento.strftime("%d/%m/%Y")}</td></tr>
+</table>
+</div>
+<p style="color:#777;font-size:13px;text-align:center;border-top:1px solid #eee;padding-top:20px;">CoworkSpace KC</p>
+</div>
+</div>'''
+            _enviar_email_con_pdf(
+                empresa.email,
+                asunto,
+                mensaje_texto,
+                mensaje_html,
+                pdf_bytes,
+                f'Factura_{factura.numero_factura}.pdf'
+            )
+            messages.success(request, f'Factura guardada y enviada a {empresa.email}')
+        except Exception as e:
+            print(f'Error generando/enviando PDF: {e}')
+            messages.success(request, 'Factura guardada correctamente.')
+        
         return redirect('factura_lista')
 
 
