@@ -880,11 +880,57 @@ def guardar_evento(request):
         sala_id = request.POST.get('sala')
         sala = SalaReunion.objects.get(id=sala_id) if sala_id else None
         
+        # Obtener fecha y horas
+        fecha_evento = request.POST['fecha_evento']
+        hora_inicio = datetime.strptime(request.POST['hora_inicio'], '%H:%M').time()
+        hora_fin = datetime.strptime(request.POST['hora_fin'], '%H:%M').time()
+        
+        # Validar que hora_fin sea mayor que hora_inicio
+        if hora_fin <= hora_inicio:
+            messages.error(request, 'La hora de fin debe ser mayor que la hora de inicio.')
+            return redirect('nuevo_evento')
+        
+        # VALIDACIÓN: Si el evento usa una sala, verificar solapamiento con reservas y eventos existentes
+        if sala:
+            # Verificar solapamiento con otros eventos en la misma sala
+            eventos_existentes = Evento.objects.filter(
+                sala=sala,
+                fecha_evento=fecha_evento
+            )
+            
+            for evento in eventos_existentes:
+                # Verificar solapamiento de horarios
+                if (evento.hora_inicio <= hora_inicio < evento.hora_fin) or \
+                   (evento.hora_inicio < hora_fin <= evento.hora_fin) or \
+                   (hora_inicio <= evento.hora_inicio and hora_fin >= evento.hora_fin):
+                    messages.error(request, 
+                        f'La sala ya está ocupada con otro evento en ese horario. '
+                        f'Evento existente: "{evento.titulo}" de {evento.hora_inicio.strftime("%H:%M")} - {evento.hora_fin.strftime("%H:%M")}')
+                    return redirect('nuevo_evento')
+            
+            # Verificar solapamiento con reservas normales de la sala
+            reservas_existentes = ReservaSala.objects.filter(
+                sala=sala,
+                fecha=fecha_evento,
+                estado__in=['confirmada', 'pendiente']
+            )
+            
+            for reserva in reservas_existentes:
+                # Verificar solapamiento de horarios
+                if (reserva.hora_inicio <= hora_inicio < reserva.hora_fin) or \
+                   (reserva.hora_inicio < hora_fin <= reserva.hora_fin) or \
+                   (hora_inicio <= reserva.hora_inicio and hora_fin >= reserva.hora_fin):
+                    messages.error(request, 
+                        f'La sala ya está reservada en ese horario. '
+                        f'Reserva existente: {reserva.hora_inicio.strftime("%H:%M")} - {reserva.hora_fin.strftime("%H:%M")} '
+                        f'por {reserva.miembro.nombre} {reserva.miembro.apellido}')
+                    return redirect('nuevo_evento')
+        
         Evento.objects.create(
             titulo=request.POST['titulo'],
             descripcion=request.POST['descripcion'],
             organizador=organizador,
-            fecha_evento=request.POST['fecha_evento'],
+            fecha_evento=fecha_evento,
             hora_inicio=request.POST['hora_inicio'],
             hora_fin=request.POST['hora_fin'],
             sala=sala,
@@ -913,10 +959,56 @@ def procesar_edicion_evento(request):
         sala_id = request.POST.get('sala')
         sala = SalaReunion.objects.get(id=sala_id) if sala_id else None
         
+        # Obtener fecha y horas
+        fecha_evento = request.POST['fecha_evento']
+        hora_inicio = datetime.strptime(request.POST['hora_inicio'], '%H:%M').time()
+        hora_fin = datetime.strptime(request.POST['hora_fin'], '%H:%M').time()
+        
+        # Validar que hora_fin sea mayor que hora_inicio
+        if hora_fin <= hora_inicio:
+            messages.error(request, 'La hora de fin debe ser mayor que la hora de inicio.')
+            return redirect('editar_evento', id=evento.id)
+        
+        # VALIDACIÓN: Si el evento usa una sala, verificar solapamiento (excluyendo el evento actual)
+        if sala:
+            # Verificar solapamiento con otros eventos en la misma sala
+            eventos_existentes = Evento.objects.filter(
+                sala=sala,
+                fecha_evento=fecha_evento
+            ).exclude(id=evento.id)  # Excluir el evento actual
+            
+            for evento_existente in eventos_existentes:
+                # Verificar solapamiento de horarios
+                if (evento_existente.hora_inicio <= hora_inicio < evento_existente.hora_fin) or \
+                   (evento_existente.hora_inicio < hora_fin <= evento_existente.hora_fin) or \
+                   (hora_inicio <= evento_existente.hora_inicio and hora_fin >= evento_existente.hora_fin):
+                    messages.error(request, 
+                        f'La sala ya está ocupada con otro evento en ese horario. '
+                        f'Evento existente: "{evento_existente.titulo}" de {evento_existente.hora_inicio.strftime("%H:%M")} - {evento_existente.hora_fin.strftime("%H:%M")}')
+                    return redirect('editar_evento', id=evento.id)
+            
+            # Verificar solapamiento con reservas normales de la sala
+            reservas_existentes = ReservaSala.objects.filter(
+                sala=sala,
+                fecha=fecha_evento,
+                estado__in=['confirmada', 'pendiente']
+            )
+            
+            for reserva in reservas_existentes:
+                # Verificar solapamiento de horarios
+                if (reserva.hora_inicio <= hora_inicio < reserva.hora_fin) or \
+                   (reserva.hora_inicio < hora_fin <= reserva.hora_fin) or \
+                   (hora_inicio <= reserva.hora_inicio and hora_fin >= reserva.hora_fin):
+                    messages.error(request, 
+                        f'La sala ya está reservada en ese horario. '
+                        f'Reserva existente: {reserva.hora_inicio.strftime("%H:%M")} - {reserva.hora_fin.strftime("%H:%M")} '
+                        f'por {reserva.miembro.nombre} {reserva.miembro.apellido}')
+                    return redirect('editar_evento', id=evento.id)
+        
         evento.titulo = request.POST['titulo']
         evento.descripcion = request.POST['descripcion']
         evento.organizador = organizador
-        evento.fecha_evento = request.POST['fecha_evento']
+        evento.fecha_evento = fecha_evento
         evento.hora_inicio = request.POST['hora_inicio']
         evento.hora_fin = request.POST['hora_fin']
         evento.sala = sala
