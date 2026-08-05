@@ -1221,67 +1221,6 @@ def nueva_reserva(request):
     return render(request, 'reservas/nuevo.html', {'salas': salas, 'miembros': miembros})
 
 
-@login_required
-@login_required
-def guardar_reserva(request):
-    if request.method == 'POST':
-        sala = get_object_or_404(SalaReunion, id=request.POST['sala'])
-        miembro = get_object_or_404(Miembro, id=request.POST['miembro'])
-        
-        # Calcular costo total basado en horas
-        hora_inicio = datetime.strptime(request.POST['hora_inicio'], '%H:%M').time()
-        hora_fin = datetime.strptime(request.POST['hora_fin'], '%H:%M').time()
-        horas = (datetime.combine(date.today(), hora_fin) - datetime.combine(date.today(), hora_inicio)).seconds / 3600
-        costo_total = Decimal(horas) * sala.precio_hora
-        
-        reserva = ReservaSala.objects.create(
-            sala=sala,
-            miembro=miembro,
-            fecha=request.POST['fecha'],
-            hora_inicio=hora_inicio,
-            hora_fin=hora_fin,
-            proposito=request.POST['proposito'],
-            numero_asistentes=request.POST['numero_asistentes'],
-            estado=request.POST.get('estado', 'confirmada'),
-            costo_total=costo_total
-        )
-        
-        # Enviar email de confirmación
-        try:
-            fecha_str = datetime.strptime(request.POST['fecha'], '%Y-%m-%d').strftime("%d/%m/%Y")
-            asunto = f'Confirmación de Reserva - {sala.nombre}'
-            mensaje = f'''
-Hola {miembro.nombre} {miembro.apellido},
-
-Tu reserva ha sido confirmada exitosamente:
-
-📍 Sala: {sala.nombre}
-📅 Fecha: {fecha_str}
-🕐 Hora: {hora_inicio.strftime("%H:%M")} - {hora_fin.strftime("%H:%M")}
-👥 Asistentes: {reserva.numero_asistentes}
-💵 Costo Total: ${costo_total}
-📝 Propósito: {reserva.proposito}
-
-Estado: {reserva.get_estado_display()}
-
-Gracias por usar CoworkSpace KC.
-
-Saludos,
-Equipo CoworkSpace KC
-            '''
-            send_mail(
-                asunto,
-                mensaje,
-                settings.DEFAULT_FROM_EMAIL,
-                [miembro.email],
-                fail_silently=True,
-            )
-        except Exception as e:
-            print(f"Error enviando email: {e}")
-        
-        messages.success(request, 'Reserva guardada correctamente. Se ha enviado un email de confirmación.')
-        return redirect('reserva_lista')
-
 
 @login_required
 def editar_reserva(request, id):
