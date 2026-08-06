@@ -1,6 +1,6 @@
 import os
 import json
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from decimal import Decimal
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
@@ -481,7 +481,7 @@ def dashboard(request):
     ingresos_mes = sum([f.total for f in facturas_mes])
     
     # Ingresos del mes anterior
-    mes_anterior = date.today().replace(day=1) - datetime.timedelta(days=1)
+    mes_anterior = date.today().replace(day=1) - timedelta(days=1)
     facturas_mes_anterior = Factura.objects.filter(
         fecha_emision__month=mes_anterior.month,
         fecha_emision__year=mes_anterior.year,
