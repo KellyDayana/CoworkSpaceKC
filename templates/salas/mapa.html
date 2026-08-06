@@ -3,7 +3,7 @@
 
 {% block title %}Mapa de Salas{% endblock %}
 
-{% block content %}
+{% block contenido %}
 <div class="container-fluid mt-4">
     <div class="row mb-3">
         <div class="col-12">
@@ -19,7 +19,7 @@
         <div class="col-12">
             <div id="mapa-salas" style="min-height: 600px; border: 2px solid #ddd; background: #f8f9fa; padding: 20px; position: relative;">
                 {% for sala in salas %}
-                <div class="sala-item" data-id="{{ sala.id }}" style="position: absolute; left: {{ sala.posicion|default:50 }}px; top: {{ forloop.counter0|mul:100|add:50 }}px;">
+                <div class="sala-item" data-id="{{ sala.id }}" style="position: absolute; left: 50px; top: {{ forloop.counter0|add:1|mul:120 }}px;">
                     <div class="card shadow-sm" style="width: 200px; cursor: move;">
                         <div class="card-body text-center">
                             <h5 class="card-title">{{ sala.nombre }}</h5>
@@ -43,18 +43,9 @@
 
 <script>
 $(document).ready(function() {
-    // Hacer las salas arrastrables
     $(".sala-item").draggable({
         containment: "#mapa-salas",
-        scroll: false,
-        stop: function(event, ui) {
-            var salaId = $(this).data('id');
-            var posX = ui.position.left;
-            var posY = ui.position.top;
-            
-            // Guardar posición (opcional - puedes implementar AJAX aquí)
-            console.log('Sala ' + salaId + ' movida a: ' + posX + ', ' + posY);
-        }
+        scroll: false
     });
 });
 </script>
