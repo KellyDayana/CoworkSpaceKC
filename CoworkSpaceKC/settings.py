@@ -24,10 +24,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-4q%e%a@pwf)5!&lw1w)6mp8c_+a&ni!qbf9t4n(z453-%93x#1')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+DEBUG = True  # TEMPORAL para ver errores
 
 # ALLOWED_HOSTS configuration
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = ['*']  # TEMPORAL
 
 # Agregar automáticamente el hostname de Render
 render_external_hostname = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
