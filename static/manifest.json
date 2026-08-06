@@ -1,0 +1,25 @@
+{
+  "short_name": "CoworkKC",
+  "name": "CoworkSpace KC - Gestión",
+  "description": "Sistema de gestión para espacios de coworking",
+  "icons": [
+    {
+      "src": "/static/images/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/images/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#2D4A64",
+  "theme_color": "#4A6785",
+  "orientation": "portrait-primary",
+  "categories": ["business", "productivity"]
+}

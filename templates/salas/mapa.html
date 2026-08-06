@@ -37,23 +37,28 @@
     </div>
 </div>
 
-<!-- jQuery UI CSS -->
-<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+{% endblock %}
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
-
+{% block scripts %}
 <script>
 jQuery(document).ready(function($) {
-    console.log("Iniciando draggable...");
+    console.log("Iniciando draggable para salas...");
+    
     $(".sala-item").draggable({
         containment: "#mapa-salas",
         scroll: false,
         cursor: "move",
-        start: function() {
-            console.log("Arrastrando...");
+        stack: ".sala-item",
+        start: function(event, ui) {
+            console.log("Arrastrando sala: " + $(this).data('id'));
+            $(this).css('z-index', 1000);
+        },
+        stop: function(event, ui) {
+            console.log("Posición final: Left=" + ui.position.left + ", Top=" + ui.position.top);
+            $(this).css('z-index', 1);
         }
     });
+    
     console.log("Draggable activado en " + $(".sala-item").length + " salas");
 });
 </script>
