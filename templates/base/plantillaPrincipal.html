@@ -49,6 +49,14 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="CoworkKC">
     
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="{% static 'manifest.json' %}">
+    <meta name="theme-color" content="#4A6785">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="CoworkKC">
+    <link rel="apple-touch-icon" href="{% static 'images/icon-192.png' %}">
+    
     <!-- Estilos locales de la plantilla -->
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     
@@ -297,5 +305,49 @@
 
     {% block scripts %}
     {% endblock %}
+
+    <!-- PWA Service Worker Registration -->
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/static/sw.js')
+                .then((registration) => {
+                    console.log('PWA: Service Worker registrado exitosamente');
+                    
+                    // Detectar actualizaciones del Service Worker
+                    registration.addEventListener('updatefound', () => {
+                        const newWorker = registration.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                // Hay una nueva versión disponible
+                                if (confirm('¡Nueva versión disponible! ¿Actualizar ahora?')) {
+                                    newWorker.postMessage({ type: 'SKIP_WAITING' });
+                                    window.location.reload();
+                                }
+                            }
+                        });
+                    });
+                })
+                .catch((error) => {
+                    console.log('PWA: Error al registrar Service Worker:', error);
+                });
+        });
+
+        // Detectar cuando vuelve la conexión para sincronizar
+        window.addEventListener('online', () => {
+            console.log('PWA: Conexión restaurada - sincronizando datos...');
+            if ('serviceWorker' in navigator && 'sync' in navigator.serviceWorker) {
+                navigator.serviceWorker.ready.then((registration) => {
+                    return registration.sync.register('sync-data');
+                });
+            }
+        });
+
+        // Detectar cuando se pierde la conexión
+        window.addEventListener('offline', () => {
+            console.log('PWA: Sin conexión - modo offline activado');
+        });
+    }
+    </script>
 </body>
 </html>
