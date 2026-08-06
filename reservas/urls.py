@@ -37,14 +37,12 @@ urlpatterns = [
     
     # CRUD Escritorios Dedicados
     path('escritorios/', views.escritorio_lista, name='escritorio_lista'),
-    path('escritorios/mapa/', views.escritorio_mapa, name='escritorio_mapa'),
+    # MAPA ELIMINADO - causaba errores
     path('escritorios/nuevo/', views.nuevo_escritorio, name='nuevo_escritorio'),
     path('escritorios/guardar/', views.guardar_escritorio, name='guardar_escritorio'),
     path('escritorios/editar/<int:id>/', views.editar_escritorio, name='editar_escritorio'),
     path('escritorios/procesarEdicion/', views.procesar_edicion_escritorio, name='procesar_edicion_escritorio'),
     path('escritorios/eliminar/<int:id>/', views.eliminar_escritorio, name='eliminar_escritorio'),
-    path('escritorios/actualizar_posicion/', views.actualizar_posicion_escritorio, name='actualizar_posicion_escritorio'),
-    path('escritorios/intercambiar/', views.intercambiar_escritorios, name='intercambiar_escritorios'),
     
     # CRUD Reservas de Salas
     path('reservas/', views.reserva_lista, name='reserva_lista'),
