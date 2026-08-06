@@ -46,6 +46,35 @@ def add_posicion_field_and_constraints(apps, schema_editor):
                         pass
 
 
+def fix_duplicate_emails(apps, schema_editor):
+    """
+    Arregla emails duplicados antes de agregar constraint UNIQUE
+    """
+    if schema_editor.connection.vendor == 'postgresql':
+        with schema_editor.connection.cursor() as cursor:
+            # Encontrar y arreglar duplicados en empresas
+            cursor.execute("""
+                UPDATE reservas_empresacliente 
+                SET email = email || '_' || id::text
+                WHERE id NOT IN (
+                    SELECT MIN(id) 
+                    FROM reservas_empresacliente 
+                    GROUP BY email
+                );
+            """)
+            
+            # Encontrar y arreglar duplicados en miembros
+            cursor.execute("""
+                UPDATE reservas_miembro 
+                SET email = email || '_' || id::text
+                WHERE id NOT IN (
+                    SELECT MIN(id) 
+                    FROM reservas_miembro 
+                    GROUP BY email
+                );
+            """)
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -56,6 +85,11 @@ class Migration(migrations.Migration):
         # Agregar campo posicion y eliminar campos antiguos de forma segura
         migrations.RunPython(
             add_posicion_field_and_constraints,
+            reverse_code=migrations.RunPython.noop,
+        ),
+        # Arreglar emails duplicados antes de agregar UNIQUE constraint
+        migrations.RunPython(
+            fix_duplicate_emails,
             reverse_code=migrations.RunPython.noop,
         ),
         # Cambios en otros modelos
