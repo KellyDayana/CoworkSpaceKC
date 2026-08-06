@@ -837,6 +837,12 @@ def sala_lista(request):
     return render(request, 'salas/listado.html', {'salas': salas})
 
 
+def sala_mapa(request):
+    # Mapa interactivo de salas con jQuery UI
+    salas = SalaReunion.objects.all()
+    return render(request, 'salas/mapa.html', {'salas': salas})
+
+
 @login_required
 def nueva_sala(request):
     # Solo administradores pueden crear salas

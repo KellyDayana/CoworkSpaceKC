@@ -29,6 +29,7 @@ urlpatterns = [
     
     # CRUD Salas de Reunión
     path('salas/', views.sala_lista, name='sala_lista'),
+    path('salas/mapa/', views.sala_mapa, name='sala_mapa'),
     path('salas/nuevo/', views.nueva_sala, name='nueva_sala'),
     path('salas/guardar/', views.guardar_sala, name='guardar_sala'),
     path('salas/editar/<int:id>/', views.editar_sala, name='editar_sala'),

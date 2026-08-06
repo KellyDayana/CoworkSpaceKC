@@ -1,0 +1,61 @@
+{% extends 'base/plantillaPrincipal.html' %}
+{% load static %}
+
+{% block title %}Mapa de Salas{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2>Disposición Interactiva de Salas</h2>
+            <p class="text-muted">Arrastra las salas para reorganizarlas</p>
+            <a href="{% url 'sala_lista' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver a Lista
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div id="mapa-salas" style="min-height: 600px; border: 2px solid #ddd; background: #f8f9fa; padding: 20px; position: relative;">
+                {% for sala in salas %}
+                <div class="sala-item" data-id="{{ sala.id }}" style="position: absolute; left: {{ sala.posicion|default:50 }}px; top: {{ forloop.counter0|mul:100|add:50 }}px;">
+                    <div class="card shadow-sm" style="width: 200px; cursor: move;">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">{{ sala.nombre }}</h5>
+                            <p class="card-text">
+                                <i class="fas fa-users"></i> {{ sala.capacidad }} personas<br>
+                                <i class="fas fa-ruler-combined"></i> {{ sala.metros_cuadrados }} m²
+                            </p>
+                            <span class="badge bg-primary">{{ sala.get_equipamiento_display }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- jQuery UI -->
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    // Hacer las salas arrastrables
+    $(".sala-item").draggable({
+        containment: "#mapa-salas",
+        scroll: false,
+        stop: function(event, ui) {
+            var salaId = $(this).data('id');
+            var posX = ui.position.left;
+            var posY = ui.position.top;
+            
+            // Guardar posición (opcional - puedes implementar AJAX aquí)
+            console.log('Sala ' + salaId + ' movida a: ' + posX + ', ' + posY);
+        }
+    });
+});
+</script>
+{% endblock %}
