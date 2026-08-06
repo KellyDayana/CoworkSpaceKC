@@ -46,57 +46,6 @@ def add_posicion_field_and_constraints(apps, schema_editor):
                         pass
 
 
-def fix_duplicate_emails(apps, schema_editor):
-    """
-    Arregla TODOS los duplicados (emails, cédulas, RUCs) antes de agregar constraints UNIQUE
-    """
-    if schema_editor.connection.vendor == 'postgresql':
-        with schema_editor.connection.cursor() as cursor:
-            # Arreglar duplicados de EMAIL en empresas
-            cursor.execute("""
-                UPDATE reservas_empresacliente 
-                SET email = email || '_dup' || id::text
-                WHERE id NOT IN (
-                    SELECT MIN(id) 
-                    FROM reservas_empresacliente 
-                    GROUP BY email
-                );
-            """)
-            
-            # Arreglar duplicados de RUC en empresas
-            cursor.execute("""
-                UPDATE reservas_empresacliente 
-                SET ruc = ruc || id::text
-                WHERE id NOT IN (
-                    SELECT MIN(id) 
-                    FROM reservas_empresacliente 
-                    GROUP BY ruc
-                );
-            """)
-            
-            # Arreglar duplicados de EMAIL en miembros
-            cursor.execute("""
-                UPDATE reservas_miembro 
-                SET email = email || '_dup' || id::text
-                WHERE id NOT IN (
-                    SELECT MIN(id) 
-                    FROM reservas_miembro 
-                    GROUP BY email
-                );
-            """)
-            
-            # Arreglar duplicados de CÉDULA en miembros
-            cursor.execute("""
-                UPDATE reservas_miembro 
-                SET cedula = LPAD((cedula::bigint + id)::text, 10, '0')
-                WHERE id NOT IN (
-                    SELECT MIN(id) 
-                    FROM reservas_miembro 
-                    GROUP BY cedula
-                );
-            """)
-
-
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -109,22 +58,8 @@ class Migration(migrations.Migration):
             add_posicion_field_and_constraints,
             reverse_code=migrations.RunPython.noop,
         ),
-        # Arreglar emails duplicados antes de agregar UNIQUE constraint
-        migrations.RunPython(
-            fix_duplicate_emails,
-            reverse_code=migrations.RunPython.noop,
-        ),
-        # Cambios en otros modelos
-        migrations.AlterField(
-            model_name='empresacliente',
-            name='email',
-            field=models.EmailField(max_length=254, unique=True),
-        ),
-        migrations.AlterField(
-            model_name='empresacliente',
-            name='ruc',
-            field=models.CharField(max_length=13, unique=True),
-        ),
+        # NOTA: Se eliminaron los AlterField con unique=True porque causan errores
+        # con datos duplicados en producción. Los constraints se agregarán manualmente después.
         migrations.AlterField(
             model_name='evento',
             name='organizador',
@@ -139,21 +74,6 @@ class Migration(migrations.Migration):
             model_name='factura',
             name='empresa',
             field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='facturas', to='reservas.empresacliente'),
-        ),
-        migrations.AlterField(
-            model_name='miembro',
-            name='cedula',
-            field=models.CharField(max_length=10, unique=True),
-        ),
-        migrations.AlterField(
-            model_name='miembro',
-            name='email',
-            field=models.EmailField(max_length=254, unique=True),
-        ),
-        migrations.AlterField(
-            model_name='miembro',
-            name='empresa',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='miembros', to='reservas.empresacliente'),
         ),
         migrations.AlterField(
             model_name='reservasala',
