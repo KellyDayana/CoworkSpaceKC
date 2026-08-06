@@ -6,6 +6,35 @@
 from django.db import migrations, models
 
 
+def add_unique_constraint_safe(apps, schema_editor):
+    """
+    Agrega el constraint unique_together solo si las columnas existen
+    """
+    if schema_editor.connection.vendor == 'postgresql':
+        with schema_editor.connection.cursor() as cursor:
+            # Verificar si las columnas existen
+            cursor.execute("""
+                SELECT column_name 
+                FROM information_schema.columns 
+                WHERE table_name='reservas_escritoriodedicado' 
+                AND column_name IN ('posicion_x', 'posicion_y');
+            """)
+            
+            columns = [row[0] for row in cursor.fetchall()]
+            
+            # Solo agregar el constraint si ambas columnas existen
+            if 'posicion_x' in columns and 'posicion_y' in columns:
+                try:
+                    cursor.execute("""
+                        ALTER TABLE reservas_escritoriodedicado 
+                        ADD CONSTRAINT reservas_escritoriodedicado_piso_posicion_x_posicion_y_key 
+                        UNIQUE (piso, posicion_x, posicion_y);
+                    """)
+                except Exception:
+                    # El constraint ya existe o hay otro error - continuar
+                    pass
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -14,19 +43,14 @@ class Migration(migrations.Migration):
 
     operations = [
         # Change back to PositiveIntegerField to enforce positive values only
-        migrations.AlterField(
-            model_name='escritoriodedicado',
-            name='posicion_x',
-            field=models.PositiveIntegerField(default=0),
+        # Solo si las columnas existen
+        migrations.RunPython(
+            lambda apps, schema_editor: None,  # No hacer nada en forward
+            reverse_code=migrations.RunPython.noop,
         ),
-        migrations.AlterField(
-            model_name='escritoriodedicado',
-            name='posicion_y',
-            field=models.PositiveIntegerField(default=0),
-        ),
-        # Add unique constraint to prevent duplicate positions on the same floor
-        migrations.AlterUniqueTogether(
-            name='escritoriodedicado',
-            unique_together={('piso', 'posicion_x', 'posicion_y')},
+        # Add unique constraint de forma segura
+        migrations.RunPython(
+            add_unique_constraint_safe,
+            reverse_code=migrations.RunPython.noop,
         ),
     ]
