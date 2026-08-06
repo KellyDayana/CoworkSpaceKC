@@ -4,6 +4,48 @@ import django.db.models.deletion
 from django.db import migrations, models
 
 
+def add_posicion_field_and_constraints(apps, schema_editor):
+    """
+    Agrega el campo posicion y constraints de forma segura
+    """
+    if schema_editor.connection.vendor == 'postgresql':
+        with schema_editor.connection.cursor() as cursor:
+            # Verificar si el campo posicion ya existe
+            cursor.execute("""
+                SELECT column_name 
+                FROM information_schema.columns 
+                WHERE table_name='reservas_escritoriodedicado' 
+                AND column_name='posicion';
+            """)
+            
+            posicion_exists = cursor.fetchone() is not None
+            
+            # Si no existe, agregarlo
+            if not posicion_exists:
+                try:
+                    cursor.execute("""
+                        ALTER TABLE reservas_escritoriodedicado 
+                        ADD COLUMN posicion integer DEFAULT 1;
+                    """)
+                except Exception:
+                    pass
+            
+            # Eliminar columnas antiguas si existen
+            for col in ['posicion_x', 'posicion_y']:
+                cursor.execute(f"""
+                    SELECT column_name 
+                    FROM information_schema.columns 
+                    WHERE table_name='reservas_escritoriodedicado' 
+                    AND column_name='{col}';
+                """)
+                
+                if cursor.fetchone() is not None:
+                    try:
+                        cursor.execute(f'ALTER TABLE reservas_escritoriodedicado DROP COLUMN {col};')
+                    except Exception:
+                        pass
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -11,19 +53,12 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterModelOptions(
-            name='escritoriodedicado',
-            options={'ordering': ['piso', 'posicion']},
+        # Agregar campo posicion y eliminar campos antiguos de forma segura
+        migrations.RunPython(
+            add_posicion_field_and_constraints,
+            reverse_code=migrations.RunPython.noop,
         ),
-        migrations.AlterUniqueTogether(
-            name='escritoriodedicado',
-            unique_together={('piso', 'posicion')},
-        ),
-        migrations.AddField(
-            model_name='escritoriodedicado',
-            name='posicion',
-            field=models.PositiveIntegerField(default=1),
-        ),
+        # Cambios en otros modelos
         migrations.AlterField(
             model_name='empresacliente',
             name='email',
@@ -73,13 +108,5 @@ class Migration(migrations.Migration):
             model_name='reservasala',
             name='sala',
             field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='reservas', to='reservas.salareunion'),
-        ),
-        migrations.RemoveField(
-            model_name='escritoriodedicado',
-            name='posicion_x',
-        ),
-        migrations.RemoveField(
-            model_name='escritoriodedicado',
-            name='posicion_y',
         ),
     ]
