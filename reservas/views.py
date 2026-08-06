@@ -521,7 +521,6 @@ def dashboard(request):
     ).count()
     
     # Eventos próximos (próximos 7 días)
-    from datetime import timedelta
     eventos_proximos = Evento.objects.filter(
         fecha_evento__gte=date.today(),
         fecha_evento__lte=date.today() + timedelta(days=7)
