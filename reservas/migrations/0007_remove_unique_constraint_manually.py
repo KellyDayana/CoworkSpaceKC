@@ -2,6 +2,32 @@
 from django.db import migrations
 
 
+def remove_all_unique_constraints(apps, schema_editor):
+    """
+    Elimina todos los constraints únicos relacionados con piso/posicion
+    en la tabla reservas_escritoriodedicado
+    """
+    if schema_editor.connection.vendor == 'postgresql':
+        with schema_editor.connection.cursor() as cursor:
+            # Buscar todos los constraints únicos en la tabla
+            cursor.execute("""
+                SELECT conname 
+                FROM pg_constraint 
+                WHERE conrelid = 'reservas_escritoriodedicado'::regclass 
+                AND contype = 'u'
+                AND (
+                    conname LIKE '%posicion%' 
+                    OR conname LIKE '%piso%'
+                );
+            """)
+            
+            constraints = cursor.fetchall()
+            
+            # Eliminar cada constraint encontrado
+            for (constraint_name,) in constraints:
+                cursor.execute(f'ALTER TABLE reservas_escritoriodedicado DROP CONSTRAINT IF EXISTS {constraint_name};')
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -9,18 +35,8 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        # Eliminar manualmente el constraint unique_together que causa problemas
-        # Usamos múltiples intentos para cubrir diferentes nombres posibles
-        migrations.RunSQL(
-            sql="""
-                -- Intentar eliminar el constraint con el nombre estándar
-                ALTER TABLE reservas_escritoriodedicado 
-                DROP CONSTRAINT IF EXISTS reservas_escritoriodedicado_piso_posicion_key;
-                
-                -- Intentar también con el nombre que Django podría generar
-                ALTER TABLE reservas_escritoriodedicado 
-                DROP CONSTRAINT IF EXISTS reservas_escritoriodedicado_piso_posicion_cd9b3a4f_uniq;
-            """,
-            reverse_sql=migrations.RunSQL.noop,
+        migrations.RunPython(
+            remove_all_unique_constraints,
+            reverse_code=migrations.RunPython.noop,
         ),
     ]
