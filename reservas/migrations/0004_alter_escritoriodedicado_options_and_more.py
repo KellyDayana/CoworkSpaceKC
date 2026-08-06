@@ -48,14 +48,14 @@ def add_posicion_field_and_constraints(apps, schema_editor):
 
 def fix_duplicate_emails(apps, schema_editor):
     """
-    Arregla emails duplicados antes de agregar constraint UNIQUE
+    Arregla TODOS los duplicados (emails, cédulas, RUCs) antes de agregar constraints UNIQUE
     """
     if schema_editor.connection.vendor == 'postgresql':
         with schema_editor.connection.cursor() as cursor:
-            # Encontrar y arreglar duplicados en empresas
+            # Arreglar duplicados de EMAIL en empresas
             cursor.execute("""
                 UPDATE reservas_empresacliente 
-                SET email = email || '_' || id::text
+                SET email = email || '_dup' || id::text
                 WHERE id NOT IN (
                     SELECT MIN(id) 
                     FROM reservas_empresacliente 
@@ -63,14 +63,36 @@ def fix_duplicate_emails(apps, schema_editor):
                 );
             """)
             
-            # Encontrar y arreglar duplicados en miembros
+            # Arreglar duplicados de RUC en empresas
+            cursor.execute("""
+                UPDATE reservas_empresacliente 
+                SET ruc = ruc || id::text
+                WHERE id NOT IN (
+                    SELECT MIN(id) 
+                    FROM reservas_empresacliente 
+                    GROUP BY ruc
+                );
+            """)
+            
+            # Arreglar duplicados de EMAIL en miembros
             cursor.execute("""
                 UPDATE reservas_miembro 
-                SET email = email || '_' || id::text
+                SET email = email || '_dup' || id::text
                 WHERE id NOT IN (
                     SELECT MIN(id) 
                     FROM reservas_miembro 
                     GROUP BY email
+                );
+            """)
+            
+            # Arreglar duplicados de CÉDULA en miembros
+            cursor.execute("""
+                UPDATE reservas_miembro 
+                SET cedula = LPAD((cedula::bigint + id)::text, 10, '0')
+                WHERE id NOT IN (
+                    SELECT MIN(id) 
+                    FROM reservas_miembro 
+                    GROUP BY cedula
                 );
             """)
 
