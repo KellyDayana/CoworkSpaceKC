@@ -74,7 +74,7 @@ class EscritorioDedicado(models.Model):
     id = models.AutoField(primary_key=True)
     codigo = models.CharField(max_length=20, unique=True)
     piso = models.PositiveIntegerField()
-    posicion = models.PositiveIntegerField(default=1)  # Posición horizontal 1-10
+    posicion = models.PositiveIntegerField(null=True, blank=True, default=None)
     precio_mensual = models.DecimalField(max_digits=8, decimal_places=2)
     
     TIPO_CHOICES = [
@@ -93,9 +93,7 @@ class EscritorioDedicado(models.Model):
     miembro_asignado = models.ForeignKey(Miembro, on_delete=models.SET_NULL, null=True, blank=True, related_name='escritorios')
 
     class Meta:
-        # Solo una posición por piso (horizontal 1-10)
-        unique_together = ['piso', 'posicion']
-        ordering = ['piso', 'posicion']
+        ordering = ['piso', 'codigo']
 
     def __str__(self):
         return f"Escritorio {self.codigo} - Piso {self.piso} - Posición {self.posicion} - {self.estado}"
