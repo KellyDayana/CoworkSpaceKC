@@ -2106,16 +2106,6 @@ def escritorio_lista(request):
 
 
 @login_required
-def escritorio_mapa(request):
-    # Vista del mapa interactivo con jQuery UI Draggable
-    escritorios = EscritorioDedicado.objects.all().order_by('piso', 'codigo')
-    pisos = escritorios.values_list('piso', flat=True).distinct()
-    return render(request, 'escritorios/mapa.html', {'escritorios': escritorios, 'pisos': pisos})
-
-
-# ==================== CRUD RESERVAS DE SALAS ====================
-
-@login_required
 def reserva_lista(request):
     if request.user.is_superuser:
         reservas = ReservaSala.objects.all().order_by('-fecha', '-hora_inicio')
