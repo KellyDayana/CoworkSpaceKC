@@ -66,6 +66,26 @@
     <!-- Corrección agresiva de espaciado (DEBE SER EL ÚLTIMO) -->
     <!-- <link rel="stylesheet" href="{% static 'css/spacing-fix.css' %}"> -->
     
+    <!-- Estilos inline para corregir header/footer -->
+    <style>
+        .wrap { background: #4A6785; padding: 10px 0; font-size: 13px; }
+        .wrap a { color: white; text-decoration: none; }
+        .ftco_navbar { background: #0D1B2A !important; }
+        .navbar-brand span { color: #4A6785; }
+        .hero-wrap { position: relative; min-height: 400px; display: flex; align-items: center; }
+        .hero-wrap .overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); }
+        .hero-wrap .container { position: relative; z-index: 1; }
+        .hero-wrap .bread { color: white; font-size: 3rem; font-weight: bold; }
+        .hero-wrap .breadcrumbs { color: white; }
+        .ftco-section { padding: 60px 0; }
+        .subheading { color: #4A6785; font-weight: 600; text-transform: uppercase; font-size: 0.9rem; }
+        .footer { background: #0D1B2A; color: white; padding: 40px 0 20px; }
+        .footer-heading { color: white; font-size: 1.2rem; margin-bottom: 20px; }
+        .footer a { color: rgba(255,255,255,0.7); text-decoration: none; }
+        .footer a:hover { color: white; }
+        .copyright { color: rgba(255,255,255,0.5); margin-top: 30px; }
+    </style>
+    
     {% block estilos_extra %}{% endblock %}
 </head>
 <body>
