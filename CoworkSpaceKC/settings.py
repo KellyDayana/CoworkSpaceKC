@@ -176,14 +176,12 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
-# Solo agregar STATICFILES_DIRS si el directorio existe
-STATIC_DIR = os.path.join(BASE_DIR, 'CoworkSpaceKC/static/')
-if os.path.exists(STATIC_DIR):
-    STATICFILES_DIRS = [STATIC_DIR]
-else:
-    STATICFILES_DIRS = []
+# Directorio de archivos estáticos
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
 
 # Para producción: archivos estáticos se recopilarán aquí
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')

@@ -18,9 +18,39 @@ def service_worker(request):
 
 # Vista para servir el manifest con el Content-Type correcto
 def manifest(request):
-    manifest_path = os.path.join(settings.BASE_DIR, 'static', 'manifest.json')
-    with open(manifest_path, 'r', encoding='utf-8') as f:
-        content = f.read()
+    # Construir manifest dinámicamente con URLs absolutas
+    import json
+    from django.conf import settings
+    
+    manifest_data = {
+        "short_name": "CoworkKC",
+        "name": "CoworkSpace KC - Gestión",
+        "description": "Sistema de gestión para espacios de coworking",
+        "icons": [
+            {
+                "src": f"{request.scheme}://{request.get_host()}/static/images/icon-192.png",
+                "sizes": "192x192",
+                "type": "image/png",
+                "purpose": "any maskable"
+            },
+            {
+                "src": f"{request.scheme}://{request.get_host()}/static/images/icon-512.png",
+                "sizes": "512x512",
+                "type": "image/png",
+                "purpose": "any maskable"
+            }
+        ],
+        "start_url": "/",
+        "scope": "/",
+        "display": "standalone",
+        "background_color": "#2D4A64",
+        "theme_color": "#4A6785",
+        "orientation": "portrait",
+        "categories": ["business", "productivity"],
+        "prefer_related_applications": False
+    }
+    
+    content = json.dumps(manifest_data, indent=2)
     return HttpResponse(content, content_type='application/manifest+json')
 
 urlpatterns = [
